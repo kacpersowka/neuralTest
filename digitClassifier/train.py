@@ -11,7 +11,8 @@ train_labels = data[2]
 test_labels = data[3]
 train_labels_one_hot = data[4]
 test_labels_one_hot = data[5]
-
+x=train_imgs
+y=train_labels_one_hot
 image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
@@ -25,7 +26,7 @@ if len(sys.argv)>2:
 else:
     e=0.1
 random.seed(time.time())
-w,b=train(train_imgs,train_labels_one_hot,[8,8,10],n,e,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
+w,b=train(x,y,[8,8,10],n,e,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
 for i in range(len(x)):
     print('Input: ',i,'\nOutput: ',feedForward(x[i],w,b,y[i],function1,mse,[[rectLinear],[softmax]])[-2],'\nTarget:',y[i],'\nError:',feedForward(x[i],w,b,y[i],function1,mse,[[rectLinear],[softmax]])[-1])
     

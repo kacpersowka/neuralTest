@@ -16,7 +16,7 @@ image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
 x=test_imgs
-y=test_labels
+y=test_labels_one_hot
 
 if len(sys.argv)>1:
     n=int(sys.argv[1])
