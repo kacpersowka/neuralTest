@@ -132,9 +132,7 @@ def updateWeights(w,b,g,e):
 def train(X,Y,l,n,e,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:[1 for i in x]]]]):
     wn,bn=generateRandomWeightsAndBiases([len(X[0])]+l)
     for i in range(n):
-        print('Pass: ',i)
         for j in range(len(X)):
-            print('Item: ',j)
             x=X[j]
             y=Y[j]
             a=feedForward(x,wn,bn,y,functions,lossFunction[0],functArguments[0])
