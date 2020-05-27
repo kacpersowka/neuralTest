@@ -27,9 +27,6 @@ else:
     e=0.1
 random.seed(time.time())
 w,b=train(x,y,[8,8,10],n,e,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
-for i in range(len(x)):
-    print('Input: ',i,'\nOutput: ',feedForward(x[i],w,b,y[i],function1,mse,[[rectLinear],[softmax]])[-2],'\nTarget:',y[i],'\nError:',feedForward(x[i],w,b,y[i],function1,mse,[[rectLinear],[softmax]])[-1])
-    
-print("Rounded output:")
-for i in range(len(x)):
-    print('Input: ',i,'\nOutput: ',numpy.round(feedForward(x[i],w,b,y[i],function1,mse,[[rectLinear],[softmax]])[-2],3),'\nTarget:',numpy.round(y[i],3),'\nError:',numpy.round(feedForward(x[i],w,b,y[i],function1,mse,[[rectLinear],[softmax]])[-1],3))
+with open("trained.pkl", "bw") as fh:
+    data = (w,b)
+    pickle.dump(data, fh)
