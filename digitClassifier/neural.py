@@ -21,7 +21,15 @@ def softmaxDerivative(x):
     z=numpy.array(x)-max(x)
     s=numpy.sum(numpy.exp(z), axis=0)
     return (numpy.multiply(s,numpy.exp(z))-numpy.multiply(numpy.exp(z),numpy.exp(z)))/s**2
-    
+
+def crossEntropy(q,p):
+    z=numpy.array(q)+1e-7 #For numerical stability
+    return -sum(p*numpy.log(z))
+
+def crossEntropyGradient(q,p): #w.r.t q
+    z=numpy.array(q)+1e-7
+    return [[p[i]/z[i] for i in range(len(p))]]
+
 def mse(x,y):
     s=0
     for i in range(len(x)):
@@ -107,16 +115,18 @@ def feedForward(x,w,b,y,functions=function1,lossFunction=mse,functArguments=[[re
         a[i]=numpy.append(a[i],1)
     return a
 
-def updateWeights(w,b,g,e):
+def updateWeights(w,b,g,e,m=0):
     wb=[]
     for i in range(len(w)): #merge biases into weights
         if (type(b[i])==list or type(b[i])==type(numpy.array(0))):
             wb.append(numpy.append(w[i],[[j] for j in b[i]],axis=1))
         else:
             wb.append(numpy.append(w[i],b[i]))
+    owb=[[0 for j in range(len(wb[i]))] for i in range(len(wb))]
     for i in range(len(wb)):
         for j in range(len(wb[i])):
-            wb[i][j]=wb[i][j]-e*g[i][j]
+            wb[i][j]=wb[i][j]-e*g[i][j]+m*owb[i][j]
+            owb[i][j]=e*g[i][j]+m*owb[i][j]
     #separate weights and biases
     wn=[]
     bn=[]
@@ -129,15 +139,15 @@ def updateWeights(w,b,g,e):
             bn.append(wb[i][-1])
     return [wn,bn]
 
-def train(X,Y,l,n,e,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:[1 for i in x]]]]):
+def train(X,Y,l,n,e,m,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:[1 for i in x]]]]):
     wn,bn=generateRandomWeightsAndBiases([len(X[0])]+l)
     for i in range(n):
-        print('Pass: ',i)
+        #print('Pass: ',i)
         for j in range(len(X)):
-            print('Item: ',j)
+            #print('Item: ',j)
             x=X[j]
             y=Y[j]
             a=feedForward(x,wn,bn,y,functions,lossFunction[0],functArguments[0])
             g=backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])
-            wn,bn=updateWeights(wn,bn,g,e)
+            wn,bn=updateWeights(wn,bn,g,e,m)
     return [wn,bn]
