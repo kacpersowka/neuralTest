@@ -29,8 +29,13 @@ if len(sys.argv)>3:
     m=float(sys.argv[3])
 else:
     m=0.8   
+if len(sys.argv)>4:
+    l=float(sys.argv[4])
+else:
+    l=None       
+
 random.seed(time.time())
-w,b=train(x,y,[8,8,10],n,e,m,functions=function1,lossFunction=[crossEntropy,crossEntropyGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
+w,b=train(x[:l],y[:l],[8,8,10],n,e,m,functions=function1,lossFunction=[crossEntropy,crossEntropyGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
 with open("trained.pkl", "bw") as fh:
     data = (w,b)
     pickle.dump(data, fh)
