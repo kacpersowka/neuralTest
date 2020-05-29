@@ -27,18 +27,18 @@ else:
     x=train_imgs
     y=train_labels_one_hot
 
-if len(sys.argv)>1:
-    n=int(sys.argv[1])
+if len(sys.argv)>2:
+    n=int(sys.argv[2])
 else:
     n=-1
     
-if len(sys.argv)>2:
-    offset=int(sys.argv[2])
+if len(sys.argv)>3:
+    offset=int(sys.argv[3])
 else:
     offset=0
 
-if len(sys.argv)>3:
-    r=int(sys.argv[3])
+if len(sys.argv)>4:
+    r=int(sys.argv[4])
 else:
     r=3   
     
