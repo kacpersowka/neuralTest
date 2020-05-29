@@ -30,7 +30,7 @@ if len(sys.argv)>3:
 else:
     m=0.8   
 if len(sys.argv)>4:
-    l=float(sys.argv[4])
+    l=int(sys.argv[4])
 else:
     l=None       
 

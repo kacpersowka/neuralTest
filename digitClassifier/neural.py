@@ -2,33 +2,64 @@ import numpy
 import random
 
 def rectLinear(xx):
-    x=numpy.array(xx)
+    x=numpy.array(xx,dtype=float)
     for i in range(len(x)):
             x[i]=max(0,x[i]) #apply activation function
     return x
 
 def rectLinearDerivative(xx):
-    x=numpy.array(xx)
+    x=numpy.array(xx,dtype=float)
     for i in range(len(x)):
             x[i]=int(x[i]>0) #apply activation function
+    return numpy.diag(x)
+
+def expRectLinear(xx,a=0.1):
+    x=numpy.array(xx,dtype=float)
+    for i in range(len(x)):
+        if not (x[i]>0):
+            x[i]=a*(numpy.exp(x[i])-1) #apply activation function
     return x
 
+def expRectLinearDerivative(xx,a=0.1):
+    x=numpy.array(xx,dtype=float)
+    for i in range(len(x)):
+        if (x[i]>0):
+            x[i]=1
+        else:
+            x[i]=a*numpy.exp(x[i])
+    return numpy.diag(x)
+
+def leakyRectLinear(xx):
+    x=numpy.array(xx,dtype=float)
+    for i in range(len(x)):
+            x[i]=max(0.01,x[i]) #apply activation function
+    return x
+
+def leakyRectLinearDerivative(xx):
+    x=numpy.array(xx,dtype=float)
+    for i in range(len(x)):
+            x[i]=max(int(x[i]>0),0.01) #apply activation function
+    return numpy.diag(x)
+
 def softmax(x):
-    z=numpy.array(x)-max(x)
+    z=numpy.array(x,dtype=float)-max(x)
     return numpy.exp(z) / numpy.sum(numpy.exp(z), axis=0)
 
 def softmaxDerivative(x):
-    z=numpy.array(x)-max(x)
-    s=numpy.sum(numpy.exp(z), axis=0)
-    return (numpy.multiply(s,numpy.exp(z))-numpy.multiply(numpy.exp(z),numpy.exp(z)))/s**2
+    z=numpy.array(x,dtype=float)-max(x)
+    v=numpy.sum(numpy.exp(z), axis=0)
+    u=numpy.array([numpy.exp(z)]).transpose()
+    du=numpy.diag(u.transpose()[0])
+    dv=u.transpose()[0]
+    return (numpy.multiply(v,du)-numpy.multiply(u,dv))/v**2
 
 def crossEntropy(q,p):
-    z=numpy.array(q)+1e-7 #For numerical stability
+    z=numpy.array(q,dtype=float)+1e-7 #For numerical stability
     return -sum(p*numpy.log(z))
 
 def crossEntropyGradient(q,p): #w.r.t q
-    z=numpy.array(q)+1e-7
-    return [[p[i]/z[i] for i in range(len(p))]]
+    z=numpy.array(q,dtype=float)+1e-7
+    return [[-p[i]/z[i] for i in range(len(p))]]
 
 def mse(x,y):
     s=0
@@ -37,32 +68,31 @@ def mse(x,y):
     return s/len(x)
 
 def getPredictions(w,x,act=rectLinear):
-    w=numpy.array(w)
-    train=numpy.array(x)
+    w=numpy.array(w,dtype=float)
+    train=numpy.array(x,dtype=float)
     train=train.dot(w)
     for i in range(len(train)):
         train[i]=act(train[i])
     return train
 
 def function1(xx,ww,b,act=rectLinear):
-    x=numpy.append(numpy.array(xx),1) #add bias column
-    w=numpy.array(ww)
+    x=numpy.append(numpy.array(xx,dtype=float),1.0) #add bias column
+    w=numpy.array(ww,dtype=float)
     w=numpy.append(w,[[i] for i in b],axis=1) #add biases into weights
     h=w.dot(x) #apply weight and bias to layer
-    h=numpy.array(act(h))
+    h=numpy.array(act(h),dtype=float)
     #for i in range(len(h)):
     #        h[i]=act(h[i]) #apply activation function
     return h
 
 def function1Derivative(xx,ww,b,actDer=rectLinearDerivative):
-    x=numpy.array(xx)
-    w=numpy.array(ww)
+    x=numpy.array(xx,dtype=float)
+    w=numpy.array(ww,dtype=float)
     w=numpy.append(w,[[i] for i in b],axis=1) #add biases into weights
     h=w.dot(x) #apply weight and bias to layer
     h=numpy.array(actDer(h))
-    #for i in range(len(h)):
-    #        h[i]=actDer(h[i]) #apply activation function
-    return [numpy.multiply(h.reshape([len(h),-1]),ww),h.reshape([len(h),-1]).dot([x])]
+    #return [numpy.multiply(h.reshape([len(h),-1]),ww),h.reshape([len(h),-1]).dot([x])]
+    return [h.dot(ww),numpy.dot(h,[x for i in ww])]
 
 def mseGradient(x,y): #dL/dX (w.r.t predicted)
     return [[2*(x[i]-y[i])/len(x) for i in range(len(x))]]
@@ -74,7 +104,7 @@ def backProp(w,b,a,y,functionDer=function1Derivative,lossDerivative=mseGradient,
         functArguments=functArguments[:-1]+[functArguments[0] for i in range(len(functArguments),len(w))]+functArguments[-1:]
     jacobians=[[] for i in a[:-1]]
     weightGradients=[[] for i in w]
-    jacobians.append(numpy.array([1])) #manually calculate loss gradient
+    jacobians.append(numpy.array([1.0])) #manually calculate loss gradient
     jacobians[-2]=numpy.array(lossDerivative(a[-2],y)) #manually calculate prediction gradient
     #grad_table[-2]=numpy.array(grad_table[-2][0])
     for i in range(len(a)-3,-1,-1): #skip loss and prediction
@@ -139,11 +169,13 @@ def updateWeights(w,b,g,e,m=0):
             bn.append(wb[i][-1])
     return [wn,bn]
 
-def train(X,Y,l,n,e,m,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:[1 for i in x]]]]):
+def train(X,Y,l,n,e,m,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
     wn,bn=generateRandomWeightsAndBiases([len(X[0])]+l)
     for i in range(n):
         #print('Pass: ',i)
-        for j in range(len(X)):
+        k=[z for z in range(len(X))]
+        random.shuffle(k)
+        for j in k:
             #print('Item: ',j)
             x=X[j]
             y=Y[j]
