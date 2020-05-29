@@ -15,8 +15,17 @@ test_labels_one_hot = data[5]
 image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
-x=test_imgs
-y=test_labels_one_hot
+
+if len(sys.argv)>1:
+    s=int(sys.argv[1])
+else:
+    s=True
+if s:
+    x=test_imgs
+    y=test_labels_one_hot
+else:
+    x=train_imgs
+    y=train_labels_one_hot
 
 if len(sys.argv)>1:
     n=int(sys.argv[1])
@@ -31,7 +40,7 @@ else:
 if len(sys.argv)>3:
     r=int(sys.argv[3])
 else:
-    r=10    
+    r=3   
     
 if n==-1:
     n=len(x)
@@ -40,5 +49,6 @@ with open("trained.pkl", "br") as fh:
     w,b = pickle.load(fh)
 
 for i in range(offset,min(n+offset,len(x))):
-    print('Input: ',i,'\nOutput: ',numpy.round(feedForward(x[i],w,b,y[i],function1,mse,[[rectLinear],[softmax]])[-2],r),'\nTarget:',numpy.round(y[i],r),'\nError:',numpy.round(feedForward(x[i],w,b,y[i],function1,mse,[[rectLinear],[softmax]])[-1],r))    
+    a=feedForward(x[i],w,b,y[i],function1,crossEntropy,[[expRectLinear],[softmax]])
+    print('Input: ',i,'\nOutput: ',numpy.round(a[-2],r),'\nTarget:',numpy.round(y[i],r),'\nError:',numpy.round(a[-1],r),'\nCorrect:',int(a[-2].index(max(a[-2]))==y[i].index(max(y[i]))))    
     
