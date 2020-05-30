@@ -6,7 +6,12 @@ from PIL import Image
 from tkinter.colorchooser import askcolor
 import neural,pickle
 
-with open("trained.pkl", "br") as fh:
+if len(sys.argv)>1:
+    net=str(sys.argv[1])
+else:
+    net='trained.pkl'
+
+with open(net, "br") as fh:
     w,b = pickle.load(fh)
 
 def process(img):
