@@ -53,6 +53,9 @@ class Paint(object):
 		
         self.convert_button = Button(self.root, text='convert', command=self.convert)
         self.convert_button.grid(row=0, column=5)
+        
+        self.clear_button = Button(self.root, text='clear', command=lambda self:self.c.delete('all'))
+        self.clear_button.grid(row=0, column=6)
 
         self.c = Canvas(self.root, bg='white', width=28*2, height=28*2)
         self.c.grid(row=1, columnspan=5)
