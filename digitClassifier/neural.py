@@ -183,3 +183,23 @@ def train(X,Y,l,n,e,m,functions=function1,lossFunction=[mse,mseGradient],functio
             g=backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])
             wn,bn=updateWeights(wn,bn,g,e,m)
     return [wn,bn]
+
+def sgd(X,Y,l,n,e,m,batchSize=5,learningFactor=1.001,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
+    wn,bn=generateRandomWeightsAndBiases([len(X[0])]+l)
+    for i in range(n):
+        #print('Pass: ',i)
+        k=[z for z in range(len(X))]
+        random.shuffle(k)
+        offset,g=0
+        for j in k:
+            #print('Item: ',j)
+            x=X[j]
+            y=Y[j]
+            a=feedForward(x,wn,bn,y,functions,lossFunction[0],functArguments[0])
+            g+=backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])
+            if (offset+1)%batchSize=0:
+                wn,bn=updateWeights(wn,bn,g/batchSize,e,m)
+                e=e/learningFactor
+                g=0
+            offset+=1
+    return [wn,bn]
