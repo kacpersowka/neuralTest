@@ -46,7 +46,7 @@ else:
 
 
 random.seed(time.time())
-w,b=trainSgd(x[:l],y[:l],[8,8,10],n,e,m,bs,lf,functions=function1,lossFunction=[crossEntropy,crossEntropyGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
+w,b=sgd(x[:l],y[:l],[8,8,10],n,e,m,bs,lf,functions=function1,lossFunction=[crossEntropy,crossEntropyGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
 with open("trained.pkl", "bw") as fh:
     data = (w,b)
     pickle.dump(data, fh)
