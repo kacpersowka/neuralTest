@@ -113,12 +113,12 @@ def backProp(w,b,a,y,functionDer=function1Derivative,lossDerivative=mseGradient,
         weightGradients[i]=numpy.multiply(jacobians[i+1].transpose(),der[1])
     return weightGradients
 
-def generateRandomWeightsAndBiases(l):
+def generateRandomWeightsAndBiases(l,wf=100,bf=100):
     w=[]
     b=[]
     for i in range(1,len(l)):
-        w.append([[random.random() for k in range(l[i-1])] for j in range(l[i])])
-        b.append([random.random()/100 for k in range(l[i])])
+        w.append([[random.random()/wf for k in range(l[i-1])] for j in range(l[i])])
+        b.append([random.random()/bf for k in range(l[i])])
 
     wb=[]
     for i in range(len(w)): #merge biases into weights
@@ -190,14 +190,15 @@ def sgd(X,Y,l,n,e,m,batchSize=5,learningFactor=1.001,functions=function1,lossFun
         #print('Pass: ',i)
         k=[z for z in range(len(X))]
         random.shuffle(k)
-        offset,g=0
+        offset=0
+        g=0
         for j in k:
-            #print('Item: ',j)
+            #print('Item: ',offset)
             x=X[j]
             y=Y[j]
             a=feedForward(x,wn,bn,y,functions,lossFunction[0],functArguments[0])
-            g+=backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])
-            if (offset+1)%batchSize=0:
+            g+=numpy.array(backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1]))
+            if (offset+1)%batchSize==0:
                 wn,bn=updateWeights(wn,bn,g/batchSize,e,m)
                 e=e/learningFactor
                 g=0

@@ -28,9 +28,9 @@ if len(sys.argv)>2:
 else:
     bs=5
 if len(sys.argv)>3:
-    lf=int(sys.argv[3])
+    lf=float(sys.argv[3])
 else:
-    lf=5
+    lf=1.001
 if len(sys.argv)>4:
     l=int(sys.argv[4])
 else:
