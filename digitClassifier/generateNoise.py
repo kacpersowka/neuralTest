@@ -1,5 +1,5 @@
 #add noise
-import pickle,random
+import pickle,random,sys
 x=[]
 y=[]
 if len(sys.argv)>1:

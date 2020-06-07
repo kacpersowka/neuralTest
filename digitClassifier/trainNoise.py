@@ -13,16 +13,16 @@ train_labels_one_hot = data[4]
 test_labels_one_hot = data[5]
 x=train_imgs
 y=train_labels_one_hot
-for i in y:
-    i.append(0.01)
+for i in range(len(y)):
+    y[i]=numpy.append(y[i],[0.01])
 image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
 
 with open("noise.pkl", "br") as fh:
     data = pickle.load(fh)
-x+=data[0]
-y+=data[1]
+x=numpy.append(x,data[0])
+y=numpy.append(y,data[1])
     
 #train n e m bs lf l
 #train e bs lf l n m
