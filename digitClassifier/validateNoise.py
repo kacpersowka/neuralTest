@@ -23,10 +23,22 @@ else:
 if s:
     x=test_imgs
     y=test_labels_one_hot
+    for i in y:
+        i.append(0.01) 
+    with open("noiseTest.pkl", "br") as fh:
+        data = pickle.load(fh)
+    x+=data[0]
+    y+=data[1]  
 else:
     x=train_imgs
     y=train_labels_one_hot
-
+    for i in y:
+        i.append(0.01) 
+    with open("noise.pkl", "br") as fh:
+        data = pickle.load(fh)
+    x+=data[0]
+    y+=data[1]   
+    
 if len(sys.argv)>2:
     n=int(sys.argv[2])
 else:
