@@ -13,8 +13,7 @@ train_labels_one_hot = data[4]
 test_labels_one_hot = data[5]
 x=train_imgs
 y=train_labels_one_hot
-for i in range(len(y)):
-    y[i]=numpy.append(y[i],[0.01])
+y=numpy.append(y,[[0.01] for k in range(len(y))],axis=1)
 image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
