@@ -43,10 +43,17 @@ if len(sys.argv)>6:
     m=float(sys.argv[6])
 else:
     m=0.8
-
+if len(sys.argv)>7:
+    wf=int(sys.argv[7])
+else:
+    wf=1
+if len(sys.argv)>8:
+    bf=int(sys.argv[8])
+else:
+    bf=1
 
 random.seed(time.time())
-w,b=sgd(x[:l],y[:l],[8,8,10],n,e,m,bs,lf,functions=function1,lossFunction=[crossEntropy,crossEntropyGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
+w,b=sgd(x[:l],y[:l],[8,8,10],n,e,m,wf,bf,bs,lf,functions=function1,lossFunction=[crossEntropy,crossEntropyGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
 with open("trained.pkl", "bw") as fh:
     data = (w,b)
     pickle.dump(data, fh)
