@@ -26,16 +26,16 @@ if s:
     y=numpy.append(y,[[0.01] for k in range(len(y))],axis=1)
     with open("noiseTest.pkl", "br") as fh:
         data = pickle.load(fh)
-    x=numpy.append(x,data[0])
-    y=numpy.append(y,data[1])
+    x=numpy.append(x,data[0],axis=0)
+    y=numpy.append(y,data[1],axis=0)
 else:
     x=train_imgs
     y=train_labels_one_hot
     y=numpy.append(y,[[0.01] for k in range(len(y))],axis=1)
     with open("noise.pkl", "br") as fh:
         data = pickle.load(fh)
-    x=numpy.append(x,data[0])
-    y=numpy.append(y,data[1])   
+    x=numpy.append(x,data[0],axis=0)
+    y=numpy.append(y,data[1],axis=0)   
     
 if len(sys.argv)>2:
     n=int(sys.argv[2])

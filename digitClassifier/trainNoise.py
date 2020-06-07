@@ -20,8 +20,8 @@ image_pixels = image_size * image_size
 
 with open("noise.pkl", "br") as fh:
     data = pickle.load(fh)
-x=numpy.append(x,data[0])
-y=numpy.append(y,data[1])
+x=numpy.append(x,data[0],axis=0)
+y=numpy.append(y,data[1],axis=0)
     
 #train n e m bs lf l
 #train e bs lf l n m
