@@ -57,8 +57,10 @@ if n==-1:
     
 with open("trained.pkl", "br") as fh:
     w,b = pickle.load(fh)
-
+c=0
 for i in range(offset,min(n+offset,len(x))):
     a=feedForward(x[i],w,b,y[i],function1,crossEntropy,[[expRectLinear],[softmax]])
-    print('Input: ',i,'\nOutput: ',numpy.round(a[-2],r),'\nTarget:',numpy.round(y[i],r),'\nError:',numpy.round(a[-1],r),'\nCorrect:',int(a[-2].index(max(a[-2]))==y[i].index(max(y[i]))))    
+    print('Input: ',i,'\nOutput: ',numpy.round(a[-2],r),'\nTarget:',numpy.round(y[i],r),'\nError:',numpy.round(a[-1],r),'\nCorrect:',int(a[-2].tolist().index(max(a[-2]))==y[i].tolist().index(max(y[i]))))
+    c+=int(a[-2].tolist().index(max(a[-2]))==y[i].tolist().index(max(y[i])))
+print(c,'/',min(n+offset,len(x))-offset,' correct') 
     
