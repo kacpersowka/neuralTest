@@ -17,11 +17,6 @@ y=numpy.append(y,[[0.01] for k in range(len(y))],axis=1)
 image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
-
-with open("noise.pkl", "br") as fh:
-    data = pickle.load(fh)
-x=numpy.append(x,data[0],axis=0)
-y=numpy.append(y,data[1],axis=0)
     
 #train n e m bs lf l
 #train e bs lf l n m
@@ -59,7 +54,7 @@ else:
     bf=1
 
 random.seed(time.time())
-w,b=sgd(x[:l],y[:l],[8,8,11],n,e,m,wf,bf,bs,lf,functions=function1,lossFunction=[crossEntropy,crossEntropyGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
+w,b=sgd(x[:l],y[:l],[16,16,11],n,e,m,wf,bf,bs,lf,functions=function1,lossFunction=[crossEntropy,crossEntropyGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[softmax]],[[rectLinearDerivative],[softmaxDerivative]]])
 with open("trained.pkl", "bw") as fh:
     data = (w,b)
     pickle.dump(data, fh)

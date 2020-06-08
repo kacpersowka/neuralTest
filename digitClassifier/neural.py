@@ -113,12 +113,18 @@ def backProp(w,b,a,y,functionDer=function1Derivative,lossDerivative=mseGradient,
         weightGradients[i]=numpy.multiply(jacobians[i+1].transpose(),der[1])
     return weightGradients
 
-def generateRandomWeightsAndBiases(l,wf=100,bf=100):
+def generateRandomWeightsAndBiases(l,wf=100,bf=100,weightMap=None,biasMap=None):
     w=[]
     b=[]
     for i in range(1,len(l)):
-        w.append([[random.random()/wf for k in range(l[i-1])] for j in range(l[i])])
-        b.append([random.random()/bf for k in range(l[i])])
+        if weightMap==None or weightMap[i]==None or weightMap[i]==[]:
+            w.append([[random.random()/wf for k in range(l[i-1])] for j in range(l[i])])
+        else:
+            w.append(weightMap[i])
+        if biasMap==None or biasMap[i]==None or biasMap[i]==[]:
+            b.append([random.random()/bf for k in range(l[i])])
+        else:
+            b.append(biasMap[i])
 
     wb=[]
     for i in range(len(w)): #merge biases into weights
@@ -173,8 +179,8 @@ def updateWeights(w,b,g,e,m=0):
             bn.append(wb[i][-1])
     return [wn,bn]
 
-def train(X,Y,l,n,e,m,wf=1,bf=100,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
-    wn,bn=generateRandomWeightsAndBiases([len(X[0])]+l,wf,bf)
+def train(X,Y,l,n,e,m,,init=generateRandomWeightsAndBiases,initArgs=[1,100],functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
+    wn,bn=init([len(X[0])]+l,*initArgs)
     for i in range(n):
         #print('Pass: ',i)
         k=[z for z in range(len(X))]
@@ -188,8 +194,8 @@ def train(X,Y,l,n,e,m,wf=1,bf=100,functions=function1,lossFunction=[mse,mseGradi
             wn,bn=updateWeights(wn,bn,g,e,m)
     return [wn,bn]
 
-def sgd(X,Y,l,n,e,m,wf=1,bf=100,batchSize=5,learningFactor=1.001,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
-    wn,bn=generateRandomWeightsAndBiases([len(X[0])]+l,wf,bf)
+def sgd(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,100],batchSize=5,learningFactor=1.001,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
+    wn,bn=init([len(X[0])]+l,*initArgs)
     for i in range(n):
         #print('Pass: ',i)
         k=[z for z in range(len(X))]

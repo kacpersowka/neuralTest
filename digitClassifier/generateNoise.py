@@ -19,12 +19,3 @@ for i in range(na):
 with open("noise.pkl", "bw") as fh:
     data = (x,y)
     pickle.dump(data, fh)
-x=[]
-y=[]
-for i in range(nb):
-    x.append([random.random() for j in range(28**2)])
-    y.append([0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.99])
-    
-with open("noiseTest.pkl", "bw") as fh:
-    data = (x,y)
-    pickle.dump(data, fh)
