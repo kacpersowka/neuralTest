@@ -53,6 +53,16 @@ def softmaxDerivative(x):
     dv=u.transpose()[0]
     return (numpy.multiply(v,du)-numpy.multiply(u,dv))/v**2
 
+def convolve2d(inp,kernel):
+    kernel=numpy.array(kernel)
+    inp=numpy.pad(inp,len(kernel)-1)
+    padOffset=(len(kernel)//2)+1
+    s=[[0 for a in range(len(inp[0])-padOffset)] for b in range(len(inp)-padOffset)]
+    for i in range(len(s)):
+        for j in range(len(s[0])):
+            s[i][j]=sum(numpy.multiply(inp[i:3+i][:,j:3+j],kernel.transpose()).flatten())
+    return s
+
 def crossEntropy(q,p):
     z=numpy.array(q,dtype=float)+1e-7 #For numerical stability
     return -sum(p*numpy.log(z))
@@ -179,7 +189,7 @@ def updateWeights(w,b,g,e,m=0):
             bn.append(wb[i][-1])
     return [wn,bn]
 
-def train(X,Y,l,n,e,m,,init=generateRandomWeightsAndBiases,initArgs=[1,100],functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
+def train(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,100],functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
     wn,bn=init([len(X[0])]+l,*initArgs)
     for i in range(n):
         #print('Pass: ',i)
