@@ -1,6 +1,9 @@
 import numpy
 import random
 
+def proper_round(n):
+     return int(n)+round(n-int(n)+1)-1
+
 def rectLinear(xx):
     x=numpy.array(xx,dtype=float)
     for i in range(len(x)):
@@ -53,15 +56,21 @@ def softmaxDerivative(x):
     dv=u.transpose()[0]
     return (numpy.multiply(v,du)-numpy.multiply(u,dv))/v**2
 
-def convolve2d(inp,kernel):
+def convolve2d(inp,kernel,stride=(1,1)):
     kernel=numpy.array(kernel)
     inp=numpy.pad(inp,len(kernel)-1)
     padOffset=(len(kernel)//2)+1
-    s=[[0 for a in range(len(inp[0])-padOffset)] for b in range(len(inp)-padOffset)]
-    for i in range(len(s)):
-        for j in range(len(s[0])):
-            s[i][j]=sum(numpy.multiply(inp[i:3+i][:,j:3+j],kernel.transpose()).flatten())
-    return s
+    #s=[[0 for a in range(len(inp[0])-padOffset)] for b in range(len(inp)-padOffset)]
+    #s=[0 for i in range(((len(inp)-padOffset)*(len(inp[0])-padOffset))//stride)]
+    s=[]
+    #for k in range(0,((len(inp)-padOffset)//stride[0])*((len(inp[0])-padOffset)//stride[1])):
+    #        i=k//(len(inp[0])-padOffset)
+    #        j=k%(len(inp[0])-padOffset)
+    for i in range(0,(len(inp)-padOffset),stride[0]):
+        for j in range(0,(len(inp[0])-padOffset),stride[1]):
+            #s[i][j]=sum(numpy.multiply(inp[i:3+i][:,j:3+j],kernel.transpose()).flatten())
+            s.append(sum(numpy.multiply(inp[i:3+i][:,j:3+j],kernel.transpose()).flatten()))
+    return numpy.array(s).reshape((proper_round((len(inp)-padOffset)/stride[1]),len(s)//proper_round((len(inp)-padOffset)/stride[1])))
 
 def crossEntropy(q,p):
     z=numpy.array(q,dtype=float)+1e-7 #For numerical stability
