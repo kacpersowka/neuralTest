@@ -56,21 +56,32 @@ def softmaxDerivative(x):
     dv=u.transpose()[0]
     return (numpy.multiply(v,du)-numpy.multiply(u,dv))/v**2
 
-def convolve2d(inp,kernel,stride=(1,1)):
+def convolve2d(inp,kernel,stride=1,mode='full'):
     kernel=numpy.array(kernel)
-    inp=numpy.pad(inp,len(kernel)-1)
-    padOffset=(len(kernel)//2)+1
+    if mode=='full':
+        inp=numpy.pad(inp,len(kernel)-1)
+        padOffset=(len(kernel)//2)+1
+        startOffset=0
+    elif mode=='same':
+        inp=numpy.pad(inp,(len(kernel)-1)//2)
+        padOffset=((len(kernel)-1)//2)+1
+        startOffset=padOffset-2
+    elif mode=='valid':
+        startOffset=0
+        inp=numpy.array(inp)
+        padOffset=(len(kernel)//2)+1
     #s=[[0 for a in range(len(inp[0])-padOffset)] for b in range(len(inp)-padOffset)]
     #s=[0 for i in range(((len(inp)-padOffset)*(len(inp[0])-padOffset))//stride)]
     s=[]
     #for k in range(0,((len(inp)-padOffset)//stride[0])*((len(inp[0])-padOffset)//stride[1])):
     #        i=k//(len(inp[0])-padOffset)
     #        j=k%(len(inp[0])-padOffset)
-    for i in range(0,(len(inp)-padOffset),stride[0]):
-        for j in range(0,(len(inp[0])-padOffset),stride[1]):
+    for i in range(startOffset,(len(inp)-padOffset),stride):
+        for j in range(startOffset,(len(inp[0])-padOffset),stride):
             #s[i][j]=sum(numpy.multiply(inp[i:3+i][:,j:3+j],kernel.transpose()).flatten())
+            print(numpy.array(inp[i:3+i][:,j:3+j]))
             s.append(sum(numpy.multiply(inp[i:3+i][:,j:3+j],kernel.transpose()).flatten()))
-    return numpy.array(s).reshape((proper_round((len(inp)-padOffset)/stride[1]),len(s)//proper_round((len(inp)-padOffset)/stride[1])))
+    return numpy.array(s).reshape((proper_round((len(inp)-padOffset)/stride),len(s)//proper_round((len(inp)-padOffset)/stride)))
 
 def crossEntropy(q,p):
     z=numpy.array(q,dtype=float)+1e-7 #For numerical stability

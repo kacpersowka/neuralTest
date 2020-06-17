@@ -2,16 +2,16 @@ from img import *
 import sys
 
 def gaussian(file,stride):
-    return filt(file,[[1,2,1],[2,3,2],[1,2,1]],(stride,stride))[0]
+    return filt(file,[[1,2,1],[2,3,2],[1,2,1]],stride)[0]
 
 def inverse(file,stride):
-    return filt(file,[[0,0,0],[0,-1,0],[0,0,0]],(stride,stride))[0]
+    return filt(file,[[0,0,0],[0,-1,0],[0,0,0]],stride)[0]
 
 def sobelX(file,stride):
-    return filt(file,[[-1,0,1],[-2,0,2],[-1,0,1]],(stride,stride))[0]
+    return filt(file,[[-1,0,1],[-2,0,2],[-1,0,1]],stride)[0]
 
 def sobelY(file,stride):
-    return filt(file,[[-1,-2,-1],[0,0,0],[1,2,1]],(stride,stride))[0]
+    return filt(file,[[-1,-2,-1],[0,0,0],[1,2,1]],stride)[0]
 
 def sobel(file,stride):
     x=sobelX(file,stride)
