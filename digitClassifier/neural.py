@@ -56,31 +56,30 @@ def softmaxDerivative(x):
     dv=u.transpose()[0]
     return (numpy.multiply(v,du)-numpy.multiply(u,dv))/v**2
 
-def convolve2d(inp,kernel,stride=1,mode='full'):
+def maxPool(inp,size=2):
+    out=[]
+    inp=numpy.array(inp)
+    for i in range(0,len(inp),size):
+        for j in range(0,len(inp[0]),size):
+            #print(inp[i:size+i][:,j:size+j])
+            out.append(max(inp[i:size+i][:,j:size+j].flatten()))
+    return numpy.array(out).reshape((proper_round((len(inp))/size),len(out)//proper_round((len(inp))/size)))
+
+def convolve2d(inp,kernel,stride=1,mode='same'):
     kernel=numpy.array(kernel)
     if mode=='full':
         inp=numpy.pad(inp,len(kernel)-1)
-        padOffset=(len(kernel)//2)+1
-        startOffset=0
+        padOffset=(len(kernel)//2)+(len(kernel)-1)//2
     elif mode=='same':
         inp=numpy.pad(inp,(len(kernel)-1)//2)
-        padOffset=((len(kernel)-1)//2)+1
-        startOffset=padOffset-2
+        padOffset=2*((len(kernel)-1)//2)
     elif mode=='valid':
-        startOffset=0
         inp=numpy.array(inp)
-        padOffset=(len(kernel)//2)+1
-    #s=[[0 for a in range(len(inp[0])-padOffset)] for b in range(len(inp)-padOffset)]
-    #s=[0 for i in range(((len(inp)-padOffset)*(len(inp[0])-padOffset))//stride)]
+        padOffset=(len(kernel)//2)+(len(kernel)-1)//2
     s=[]
-    #for k in range(0,((len(inp)-padOffset)//stride[0])*((len(inp[0])-padOffset)//stride[1])):
-    #        i=k//(len(inp[0])-padOffset)
-    #        j=k%(len(inp[0])-padOffset)
-    for i in range(startOffset,(len(inp)-padOffset),stride):
-        for j in range(startOffset,(len(inp[0])-padOffset),stride):
-            #s[i][j]=sum(numpy.multiply(inp[i:3+i][:,j:3+j],kernel.transpose()).flatten())
-            print(numpy.array(inp[i:3+i][:,j:3+j]))
-            s.append(sum(numpy.multiply(inp[i:3+i][:,j:3+j],kernel.transpose()).flatten()))
+    for i in range(0,(len(inp)-padOffset),stride):
+        for j in range(0,(len(inp[0])-padOffset),stride):
+            s.append(sum(numpy.multiply(inp[i:len(kernel)+i][:,j:len(kernel)+j],kernel.transpose()).flatten()))
     return numpy.array(s).reshape((proper_round((len(inp)-padOffset)/stride),len(s)//proper_round((len(inp)-padOffset)/stride)))
 
 def crossEntropy(q,p):
@@ -180,6 +179,17 @@ def feedForward(x,w,b,y,functions=function1,lossFunction=mse,functArguments=[[re
     for i in range(len(b)):
         a[i]=numpy.append(a[i],1)
     return a
+
+def feedForwardCNN(inp,kernels,cnnBiases,mlpW,mlpB,y,pools=maxPool,poolArguments=2,mlpFunctions=function1,lossFuntion=crossEntropy,mlpFunctArguments=[[rectLinear],[lambda x:x]]):
+    if type(pools)!=list:
+        pools=[pools for i in range(len(kernels))]
+    if type(poolArguments)!=list:
+        poolArguments=[poolArguments for i in range(len(kernels))]
+    x=inp
+    for kernel in kernels:
+        x=convolve2d(x,kernel)
+    return x.flatten()
+    a=feedForward(x.flatten(),mlpW,mlpB,y,mlpFunctions,lossFunction,mlpFunctArguments)
 
 def updateWeights(w,b,g,e,m=0):
     wb=[]
