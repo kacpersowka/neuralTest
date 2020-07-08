@@ -20,6 +20,26 @@ image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
 
+w,b=generateRandomWeightsAndBiases([16,16,10])
+yy=[0,0,0,0,0,1,0,0,0,0]
+#kernels=numpy.array([[[1,2,1],[2,3,2],[1,2,1]],[[-1,-2,-1],[0,0,0],[1,2,1]],[[0,0,0],[0,-1,0],[0,0,0]]])
+#biases=[0,0,0]
+kernels,biases=generateRandomKernelsAndBiases([3,3,3])
+kernels=numpy.array(kernels)
+
+def cycle(x,y,w,b,kernels,biases,e):
+    for i in range(len(x)):
+        yb=[0.0 for j in range(10)]
+        yb[int(y[i])]=1.0
+        a=feedForwardCNN(x[i].reshape(28,28),kernels,biases,w,b,yb)
+        print('Outputs: ',a[-2])
+        print('Expected: ',yb)
+        print('Error: ',a[-1])
+        ng,wg=backPropCNN(kernels,biases,w,b,a,yb)
+        w,b=updateWeights(w,b,wg[len(kernels):],e)
+        kernels,biases=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)]],e)
+    return [w,b,kernels,biases]
+
 def drawFigure(fig,fname='test.png'):
     f=plt.figure()
     plt.imshow(fig, cmap="Greys")

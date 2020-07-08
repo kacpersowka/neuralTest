@@ -61,9 +61,19 @@ def maxPool(inp,size=2):
     inp=numpy.array(inp)
     for i in range(0,len(inp),size):
         for j in range(0,len(inp[0]),size):
-            #print(inp[i:size+i][:,j:size+j])
             out.append(max(inp[i:size+i][:,j:size+j].flatten()))
     return numpy.array(out).reshape((proper_round((len(inp))/size),len(out)//proper_round((len(inp))/size)))
+
+def maxPoolDerivative(inp,size=2):
+    inp=numpy.array(inp)
+    out=[]
+    for i in range(0,len(inp),size):
+        for j in range(0,len(inp[0]),size):
+            a=inp[i:size+i][:,j:size+j]
+            b=numpy.where(a==max(a.flatten()))
+            out.append([0 for k in inp.flatten()])
+            out[-1][(i+b[0][0])*(len(inp)-1)+(j+b[1][0])]=1
+    return out
 
 def convolve2d(inp,kernel,stride=1,mode='same'):
     kernel=numpy.array(kernel)
@@ -79,8 +89,31 @@ def convolve2d(inp,kernel,stride=1,mode='same'):
     s=[]
     for i in range(0,(len(inp)-padOffset),stride):
         for j in range(0,(len(inp[0])-padOffset),stride):
-            s.append(sum(numpy.multiply(inp[i:len(kernel)+i][:,j:len(kernel)+j],kernel.transpose()).flatten()))
+            s.append(sum(numpy.multiply(inp[i:len(kernel)+i][:,j:len(kernel)+j],kernel[::-1][:,::-1]).flatten()))
     return numpy.array(s).reshape((proper_round((len(inp)-padOffset)/stride),len(s)//proper_round((len(inp)-padOffset)/stride)))
+
+def convolve2dDerivative(inp,kernel,stride=1,mode='same'):
+    kernel=numpy.array(kernel)
+    if mode=='full':
+        inp=numpy.pad(inp,len(kernel)-1)
+        pad=len(kernel)-1
+        padOffset=(len(kernel)//2)+(len(kernel)-1)//2
+    elif mode=='same':
+        inp=numpy.pad(inp,(len(kernel)-1)//2)
+        pad=(len(kernel)-1)//2
+        padOffset=2*((len(kernel)-1)//2)
+    elif mode=='valid':
+        inp=numpy.array(inp)
+        padOffset=(len(kernel)//2)+(len(kernel)-1)//2
+    inpDer=[] #dcdx
+    kerDer=[] #dcdk
+    for i in range(0,(len(inp)-padOffset),stride):
+        for j in range(0,(len(inp[0])-padOffset),stride):
+            temp=numpy.zeros(inp.shape)
+            temp[i:len(kernel)+i][:,j:len(kernel)+j]=kernel[::-1][:,::-1]
+            inpDer.append(temp[pad:-pad][:,pad:-pad].flatten())
+            kerDer.append(inp[i:len(kernel)+i][:,j:len(kernel)+j][::-1][:,::-1].flatten())
+    return [numpy.array(inpDer),numpy.array(kerDer)]
 
 def crossEntropy(q,p):
     z=numpy.array(q,dtype=float)+1e-7 #For numerical stability
@@ -123,6 +156,25 @@ def function1Derivative(xx,ww,b,actDer=rectLinearDerivative):
     #return [numpy.multiply(h.reshape([len(h),-1]),ww),h.reshape([len(h),-1]).dot([x])]
     return [h.dot(ww),numpy.dot(h,[x for i in ww])]
 
+def function2(xx,kernel,b,act=expRectLinear,pool=maxPool,poolArgs=[2],stride=1,mode='same'):
+    x=numpy.array(xx,dtype=float)
+    c=convolve2d(x,kernel,stride,mode)+b
+    h=act(c.flatten()).reshape(c.shape)
+    y=pool(h,*poolArgs)
+    return y
+
+def function2Derivative(xx,kernel,b,act=expRectLinear,actDer=expRectLinearDerivative,poolDer=maxPoolDerivative,poolDerArgs=[2],stride=1,mode='same'):
+    x=numpy.array(xx,dtype=float)
+    c=convolve2d(x,kernel,stride,mode)+b
+    h=act(c.flatten()).reshape(x.shape)
+    dydh=poolDer(h,*poolDerArgs)
+    dhdc=actDer(c.flatten())
+    dcdx,dcdk=convolve2dDerivative(x,kernel,stride,mode)
+    dydc=numpy.dot(dydh,dhdc)
+    dydx=numpy.dot(dydc,dcdx)
+    dydk=numpy.dot(dydc,dcdk)
+    return [dydx,dydk]
+
 def mseGradient(x,y): #dL/dX (w.r.t predicted)
     return [[2*(x[i]-y[i])/len(x) for i in range(len(x))]]
 
@@ -131,16 +183,16 @@ def backProp(w,b,a,y,functionDer=function1Derivative,lossDerivative=mseGradient,
         functionDer=[functionDer for i in range(len(w))]
     if len(functArguments)==2 and len(w)>2:
         functArguments=functArguments[:-1]+[functArguments[0] for i in range(len(functArguments),len(w))]+functArguments[-1:]
-    jacobians=[[] for i in a[:-1]]
+    neuronGradients=[[] for i in a[:-1]]
     weightGradients=[[] for i in w]
-    jacobians.append(numpy.array([1.0])) #manually calculate loss gradient
-    jacobians[-2]=numpy.array(lossDerivative(a[-2],y)) #manually calculate prediction gradient
+    neuronGradients.append(numpy.array([1.0])) #manually calculate loss gradient
+    neuronGradients[-2]=numpy.array(lossDerivative(a[-2],y)) #manually calculate prediction gradient
     #grad_table[-2]=numpy.array(grad_table[-2][0])
     for i in range(len(a)-3,-1,-1): #skip loss and prediction
         der=(functionDer[i](a[i],w[i],b[i],*functArguments[i]))
-        jacobians[i]=numpy.array(numpy.dot(jacobians[i+1],der[0]))
-        weightGradients[i]=numpy.multiply(jacobians[i+1].transpose(),der[1])
-    return weightGradients
+        neuronGradients[i]=numpy.array(numpy.dot(neuronGradients[i+1],der[0]))
+        weightGradients[i]=numpy.multiply(neuronGradients[i+1].transpose(),der[1])
+    return [neuronGradients,weightGradients]
 
 def generateRandomWeightsAndBiases(l,wf=100,bf=100,weightMap=None,biasMap=None):
     w=[]
@@ -163,6 +215,20 @@ def generateRandomWeightsAndBiases(l,wf=100,bf=100,weightMap=None,biasMap=None):
             wb.append(numpy.append(w[i],b[i]))
     return [w,b]
 
+def generateRandomKernelsAndBiases(l,wf=100,bf=100,weightMap=None,biasMap=None):
+    w=[]
+    b=[]
+    for i in range(len(l)):
+        if weightMap==None or weightMap[i]==None or weightMap[i]==[]:
+            w.append([[random.random()/wf for k in range(l[i])] for j in range(l[i])])
+        else:
+            w.append(weightMap[i])
+        if biasMap==None or biasMap[i]==None or biasMap[i]==[]:
+            b.append(random.random()/bf)
+        else:
+            b.append(biasMap[i])
+    return [w,b]
+
 def feedForward(x,w,b,y,functions=function1,lossFunction=mse,functArguments=[[rectLinear],[lambda x:x]]):
     if type(functions)!=list:
         functions=[functions for i in range(len(w))]
@@ -180,16 +246,42 @@ def feedForward(x,w,b,y,functions=function1,lossFunction=mse,functArguments=[[re
         a[i]=numpy.append(a[i],1)
     return a
 
-def feedForwardCNN(inp,kernels,cnnBiases,mlpW,mlpB,y,pools=maxPool,poolArguments=2,mlpFunctions=function1,lossFuntion=crossEntropy,mlpFunctArguments=[[rectLinear],[lambda x:x]]):
-    if type(pools)!=list:
-        pools=[pools for i in range(len(kernels))]
-    if type(poolArguments)!=list:
-        poolArguments=[poolArguments for i in range(len(kernels))]
+def feedForwardCNN(inp,kernels,cnnBiases,mlpW,mlpB,y,functions=function2,mlpFunctions=function1,lossFunction=crossEntropy,mlpFunctArguments=[[expRectLinear],[softmax]],functArguments=[[expRectLinear,maxPool,[2],1,'same']]):
+    if type(functions)!=list:
+        functions=[functions for i in range(len(kernels))]
+    if len(functArguments)==1:
+        functArguments=[functArguments[0] for i in range(len(kernels))]
     x=inp
-    for kernel in kernels:
-        x=convolve2d(x,kernel)
-    return x.flatten()
-    a=feedForward(x.flatten(),mlpW,mlpB,y,mlpFunctions,lossFunction,mlpFunctArguments)
+    a=[inp]
+    for i in range(len(kernels)): #Feed forward CNN layers
+        x=functions[i](x,kernels[i],cnnBiases[i],*functArguments[i])
+        #x=pools[i](cnnAct[i]((convolve2d(x,kernels[i])+cnnBiases[i]).flatten()).reshape(x.shape),*poolArguments[i])
+        a.append(x)
+    a+=feedForward(x.flatten(),mlpW,mlpB,y,mlpFunctions,lossFunction,mlpFunctArguments)[1:]
+    return a
+
+def backPropCNN(kernels,cnnBiases,mlpW,mlpB,a,y,functionDer=function2Derivative,mlpFunctionDer=function1Derivative,lossDerivative=crossEntropyGradient,mlpFunctArguments=[[rectLinearDerivative],[softmaxDerivative]],functArguments=[[expRectLinear,expRectLinearDerivative,maxPoolDerivative,[2],1,'same']]):
+    if type(functionDer)!=list:
+        functionDer=[functionDer for i in range(len(kernels))]
+    if len(functArguments)==1:
+        functArguments=[functArguments[0] for i in range(len(kernels))]
+    tempSh=a[len(kernels)].shape
+    a[len(kernels)]=numpy.append(a[len(kernels)].flatten(),1)
+    neuronGradients,weightGradients=backProp(mlpW,mlpB,a[len(kernels):],y,mlpFunctionDer,lossDerivative,mlpFunctArguments)
+    a[len(kernels)]=numpy.delete(a[len(kernels)],-1).reshape(tempSh)
+    for i in range(len(a)-len(neuronGradients)-1,-1,-1):
+        der=functionDer[-(len(a)-len(neuronGradients)-i)](a[i],kernels[-(len(a)-len(neuronGradients)-i)],cnnBiases[-(len(a)-len(neuronGradients)-i)],*functArguments[-(len(a)-len(neuronGradients)-i)])
+        weightGradients.insert(0,numpy.dot(neuronGradients[0],der[1]))
+        neuronGradients.insert(0,numpy.dot(neuronGradients[0],der[0]))
+    return [neuronGradients,weightGradients]
+
+def updateKernels(kernels,b,g,e,m=0):
+    newKernels=[]
+    newBiases=[]
+    for i in range(len(kernels)):
+        newKernels.append(kernels[i]-e*g[1][i].reshape(kernels[i].shape))
+        newBiases.append(b[i]-sum((e*g[0][i+1]).flatten()))
+    return [newKernels,newBiases]
 
 def updateWeights(w,b,g,e,m=0):
     wb=[]
@@ -198,15 +290,16 @@ def updateWeights(w,b,g,e,m=0):
             wb.append(numpy.append(w[i],[[j] for j in b[i]],axis=1))
         else:
             wb.append(numpy.append(w[i],b[i]))
-    #velocity=[[0 for j in range(len(wb[i]))] for i in range(len(wb))]
-    velocity=0
+    #Temp, velocity needs to be carried over
+    velocity=[[0 for j in range(len(wb[i]))] for i in range(len(wb))]
+    #velocity=0
+    #velocity=m*velocity-e*numpy.array(g)
+    #wb=wb+velocity
     for i in range(len(wb)):
-        velocity=m*velocity-e*numpy.array(g)
-        wb=wb+velocity
-        #for j in range(len(wb[i])):
-            #wb[i][j]=wb[i][j]+velocity[i][j]
-            #wb[i][j]=wb[i][j]-e*g[i][j]+m*velocity[i][j]
-            #velocity[i][j]=e*g[i][j]+m*velocity[i][j]
+        for j in range(len(wb[i])):
+            wb[i][j]=wb[i][j]+velocity[i][j]
+            wb[i][j]=wb[i][j]-e*g[i][j]+m*velocity[i][j]
+            velocity[i][j]=e*g[i][j]+m*velocity[i][j]
     #separate weights and biases
     wn=[]
     bn=[]
@@ -230,7 +323,7 @@ def train(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,100],funct
             x=X[j]
             y=Y[j]
             a=feedForward(x,wn,bn,y,functions,lossFunction[0],functArguments[0])
-            g=backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])
+            g=backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])[1]
             wn,bn=updateWeights(wn,bn,g,e,m)
     return [wn,bn]
 
@@ -247,7 +340,7 @@ def sgd(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,100],batchSi
             x=X[j]
             y=Y[j]
             a=feedForward(x,wn,bn,y,functions,lossFunction[0],functArguments[0])
-            g+=numpy.array(backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1]))
+            g+=numpy.array(backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])[1])
             if (offset+1)%batchSize==0:
                 wn,bn=updateWeights(wn,bn,g/batchSize,e,m)
                 e=e/learningFactor
