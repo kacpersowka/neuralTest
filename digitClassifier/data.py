@@ -20,11 +20,11 @@ image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
 
-w,b=generateRandomWeightsAndBiases([16,16,10])
+w,b=generateRandomWeightsAndBiases([16,16,10],0.1,0)
 yy=[0,0,0,0,0,1,0,0,0,0]
 #kernels=numpy.array([[[1,2,1],[2,3,2],[1,2,1]],[[-1,-2,-1],[0,0,0],[1,2,1]],[[0,0,0],[0,-1,0],[0,0,0]]])
 #biases=[0,0,0]
-kernels,biases=generateRandomKernelsAndBiases([3,3,3])
+kernels,biases=generateRandomKernelsAndBiases([3,3,3],1,0)
 kernels=numpy.array(kernels)
 
 def cycle(x,y,w,b,kernels,biases,e):
@@ -35,12 +35,27 @@ def cycle(x,y,w,b,kernels,biases,e):
         print('Outputs: ',a[-2])
         print('Expected: ',yb)
         print('Error: ',a[-1])
-        ng,wg=backPropCNN(kernels,biases,w,b,a,yb)
-        w,b=updateWeights(w,b,wg[len(kernels):],e)
-        kernels,biases=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)]],e)
+        #ng,wg=backPropCNN(kernels,biases,w,b,a,yb)
+        #w,b=updateWeights(w,b,wg[len(kernels):],e)
+        #kernels,biases=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)]],e)
     return [w,b,kernels,biases]
 
 def drawFigure(fig,fname='test.png'):
     f=plt.figure()
     plt.imshow(fig, cmap="Greys")
     f.savefig(fname)
+    
+if __name__=='__main__':
+    e=0.1
+    nn=1
+    sx,sy=[x,y]
+    n=len(sx)
+    random.shuffle(sx)
+    random.shuffle(sy)
+    sx,sy=[sx[:n],sy[:n]]
+    for i in range(nn):
+        print('EPOCH: ',i)
+        w,b,kernels,biases=cycle(sx,sy,w,b,kernels,biases,e)
+    with open("trainedCNN.pkl", "bw") as fh:
+        data = (w,b,kernels,biases)
+        pickle.dump(data, fh)

@@ -194,16 +194,17 @@ def backProp(w,b,a,y,functionDer=function1Derivative,lossDerivative=mseGradient,
         weightGradients[i]=numpy.multiply(neuronGradients[i+1].transpose(),der[1])
     return [neuronGradients,weightGradients]
 
-def generateRandomWeightsAndBiases(l,wf=100,bf=100,weightMap=None,biasMap=None):
+def generateRandomWeightsAndBiases(l,wf=1,bf=0,weightMap=None,biasMap=None):
     w=[]
     b=[]
     for i in range(1,len(l)):
         if weightMap==None or weightMap[i]==None or weightMap[i]==[]:
-            w.append([[random.random()/wf for k in range(l[i-1])] for j in range(l[i])])
+            #w.append([[random.random()*((2/l[i-1])**0.5)*wf for k in range(l[i-1])] for j in range(l[i])])
+            w.append(numpy.random.normal(size=[l[i],l[i-1]])*(2/(l[i-1]))**0.5*wf)
         else:
             w.append(weightMap[i])
         if biasMap==None or biasMap[i]==None or biasMap[i]==[]:
-            b.append([random.random()/bf for k in range(l[i])])
+            b.append([random.random()*bf for k in range(l[i])])
         else:
             b.append(biasMap[i])
 
@@ -215,16 +216,17 @@ def generateRandomWeightsAndBiases(l,wf=100,bf=100,weightMap=None,biasMap=None):
             wb.append(numpy.append(w[i],b[i]))
     return [w,b]
 
-def generateRandomKernelsAndBiases(l,wf=100,bf=100,weightMap=None,biasMap=None):
+def generateRandomKernelsAndBiases(l,wf=1,bf=0,weightMap=None,biasMap=None):
     w=[]
     b=[]
     for i in range(len(l)):
         if weightMap==None or weightMap[i]==None or weightMap[i]==[]:
-            w.append([[random.random()/wf for k in range(l[i])] for j in range(l[i])])
+            #w.append([[random.random()*wf for k in range(l[i])] for j in range(l[i])])
+            w.append(numpy.random.normal(size=[l[i],l[i]])*(2/(l[i-1]))**0.5*wf)
         else:
             w.append(weightMap[i])
         if biasMap==None or biasMap[i]==None or biasMap[i]==[]:
-            b.append(random.random()/bf)
+            b.append(random.random()*bf)
         else:
             b.append(biasMap[i])
     return [w,b]
