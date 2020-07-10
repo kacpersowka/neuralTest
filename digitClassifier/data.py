@@ -50,8 +50,8 @@ if __name__=='__main__':
     e=0.1
     nn=1
     sx,sy=[x,y]
-    sx,sy=[sx[:n],sy[:n]]
     n=len(sx)
+    sx,sy=[sx[:n],sy[:n]]
     for i in range(nn):
         print('EPOCH: ',i)
         w,b,kernels,biases=cycle(sx,sy,w,b,kernels,biases,e)
