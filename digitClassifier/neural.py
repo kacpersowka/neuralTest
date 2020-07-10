@@ -190,7 +190,7 @@ def backProp(w,b,a,y,functionDer=function1Derivative,lossDerivative=mseGradient,
     #grad_table[-2]=numpy.array(grad_table[-2][0])
     for i in range(len(a)-3,-1,-1): #skip loss and prediction
         der=(functionDer[i](a[i],w[i],b[i],*functArguments[i]))
-        neuronGradients[i]=numpy.array(numpy.dot(neuronGradients[i+1],der[0]))
+        neuronGradients[i]=numpy.dot(neuronGradients[i+1],der[0])
         weightGradients[i]=numpy.multiply(neuronGradients[i+1].transpose(),der[1])
     return [neuronGradients,weightGradients]
 
@@ -265,7 +265,7 @@ def backPropCNN(kernels,cnnBiases,mlpW,mlpB,a,y,functionDer=function2Derivative,
     neuronGradients,weightGradients=backProp(mlpW,mlpB,a[len(kernels):],y,mlpFunctionDer,lossDerivative,mlpFunctArguments)
     a[len(kernels)]=numpy.delete(a[len(kernels)],-1).reshape(tempSh)
     for i in range(len(a)-len(neuronGradients)-1,-1,-1):
-        der=functionDer[-(len(a)-len(neuronGradients)-i)](a[i],kernels[-(len(a)-len(neuronGradients)-i)],cnnBiases[-(len(a)-len(neuronGradients)-i)],*functArguments[-(len(a)-len(neuronGradients)-i)])
+        der=functionDer[i](a[i],kernels[i],cnnBiases[i],*functArguments[i])
         weightGradients.insert(0,numpy.dot(neuronGradients[0],der[1]))
         neuronGradients.insert(0,numpy.dot(neuronGradients[0],der[0]))
     return [neuronGradients,weightGradients]

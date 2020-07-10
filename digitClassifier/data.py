@@ -25,7 +25,7 @@ w,b=generateRandomWeightsAndBiases([16,16,10],1,0)
 yy=[0,0,0,0,0,1,0,0,0,0]
 #kernels=numpy.array([[[1,2,1],[2,3,2],[1,2,1]],[[-1,-2,-1],[0,0,0],[1,2,1]],[[0,0,0],[0,-1,0],[0,0,0]]])
 #biases=[0,0,0]
-kernels,biases=generateRandomKernelsAndBiases([3,3,3],1,0)
+kernels,biases=generateRandomKernelsAndBiases([5,3,5],1,0)
 kernels=numpy.array(kernels)
 
 def cycle(x,y,w,b,kernels,biases,e):
