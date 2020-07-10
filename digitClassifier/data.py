@@ -20,7 +20,8 @@ image_size = 28 # width and length
 no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
 
-w,b=generateRandomWeightsAndBiases([16,16,10],0.1,0)
+random.seed(time.time())
+w,b=generateRandomWeightsAndBiases([16,16,10],1,0)
 yy=[0,0,0,0,0,1,0,0,0,0]
 #kernels=numpy.array([[[1,2,1],[2,3,2],[1,2,1]],[[-1,-2,-1],[0,0,0],[1,2,1]],[[0,0,0],[0,-1,0],[0,0,0]]])
 #biases=[0,0,0]
@@ -49,10 +50,8 @@ if __name__=='__main__':
     e=0.1
     nn=1
     sx,sy=[x,y]
-    n=len(sx)
-    random.shuffle(sx)
-    random.shuffle(sy)
     sx,sy=[sx[:n],sy[:n]]
+    n=len(sx)
     for i in range(nn):
         print('EPOCH: ',i)
         w,b,kernels,biases=cycle(sx,sy,w,b,kernels,biases,e)

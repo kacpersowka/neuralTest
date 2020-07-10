@@ -200,20 +200,13 @@ def generateRandomWeightsAndBiases(l,wf=1,bf=0,weightMap=None,biasMap=None):
     for i in range(1,len(l)):
         if weightMap==None or weightMap[i]==None or weightMap[i]==[]:
             #w.append([[random.random()*((2/l[i-1])**0.5)*wf for k in range(l[i-1])] for j in range(l[i])])
-            w.append(numpy.random.normal(size=[l[i],l[i-1]])*(2/(l[i-1]))**0.5*wf)
+            w.append((numpy.random.random(size=[l[i],l[i-1]])*2-1)*(2/(l[i-1]))**0.5*wf)
         else:
             w.append(weightMap[i])
         if biasMap==None or biasMap[i]==None or biasMap[i]==[]:
-            b.append([random.random()*bf for k in range(l[i])])
+            b.append([(random.random()*2-1)*bf for k in range(l[i])])
         else:
             b.append(biasMap[i])
-
-    wb=[]
-    for i in range(len(w)): #merge biases into weights
-        if (type(b[i])==list or type(b[i])==type(numpy.array(0))):
-            wb.append(numpy.append(w[i],[[j] for j in b[i]],axis=1))
-        else:
-            wb.append(numpy.append(w[i],b[i]))
     return [w,b]
 
 def generateRandomKernelsAndBiases(l,wf=1,bf=0,weightMap=None,biasMap=None):
@@ -222,11 +215,11 @@ def generateRandomKernelsAndBiases(l,wf=1,bf=0,weightMap=None,biasMap=None):
     for i in range(len(l)):
         if weightMap==None or weightMap[i]==None or weightMap[i]==[]:
             #w.append([[random.random()*wf for k in range(l[i])] for j in range(l[i])])
-            w.append(numpy.random.normal(size=[l[i],l[i]])*(2/(l[i-1]))**0.5*wf)
+            w.append((numpy.random.random(size=[l[i],l[i]])*2-1)*(2/(l[i-1]))**0.5*wf)
         else:
             w.append(weightMap[i])
         if biasMap==None or biasMap[i]==None or biasMap[i]==[]:
-            b.append(random.random()*bf)
+            b.append((random.random()*2-1)*bf)
         else:
             b.append(biasMap[i])
     return [w,b]
@@ -314,7 +307,7 @@ def updateWeights(w,b,g,e,m=0):
             bn.append(wb[i][-1])
     return [wn,bn]
 
-def train(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,100],functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
+def train(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,0],functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
     wn,bn=init([len(X[0])]+l,*initArgs)
     for i in range(n):
         #print('Pass: ',i)
