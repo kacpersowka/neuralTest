@@ -59,9 +59,9 @@ def cycle(x,y,w,b,kernels,biases,e):
         print('Outputs: ',a[-2])
         print('Expected: ',yb)
         print('Error: ',a[-1])
-        #ng,wg=backPropCNN(kernels,biases,w,b,a,yb)
-        #w,b=updateWeights(w,b,wg[len(kernels):],e)
-        #kernels,biases=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)]],e)
+        ng,wg,bg=backPropCNN(kernels,biases,w,b,a,yb)
+        w,b=updateWeights(w,b,wg[len(kernels):],e)
+        kernels,biases=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)],bg],e)
     return [w,b,kernels,biases]
 
 def drawFigure(fig,fname='test.png'):
