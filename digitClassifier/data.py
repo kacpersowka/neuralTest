@@ -21,11 +21,34 @@ no_of_different_labels = 10 #  i.e. 0, 1, 2, 3, ..., 9
 image_pixels = image_size * image_size
 
 random.seed(time.time())
-w,b=generateRandomWeightsAndBiases([16,16,10],1,0)
-yy=[0,0,0,0,0,1,0,0,0,0]
+w,b=generateRandomWeightsAndBiases([16,16,10],5,0)
+#yy=[0,0,0,0,0,1,0,0,0,0]
+xx=numpy.array(
+    [[[0,1,2,3,4],[0,0,1,2,3],[0,0,0,1,2],[0,0,0,0,1],[0,0,0,0,0]],
+    [[4,3,2,1,0],[3,2,1,0,0],[2,1,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],
+    [[0,0,0,0,0],[0,0,0,0,1],[0,0,0,1,2],[0,0,1,2,3],[0,1,2,3,4]],
+    [[0,0,0,0,0],[1,0,0,0,0],[2,1,0,0,0],[3,2,1,0,0],[4,3,2,1,0]]])+1
+X=[numpy.multiply(numpy.random.random((5,5)),xx[i%4]) for i in range(40)]
+yy=numpy.array([[[0.01,0.97],[0.01,0.01]],[[0.97,0.01],[0.01,0.01]],[[0.01,0.01],[0.01,0.97]],[[0.01,0.01],[0.97,0.01]]])
+
+def test(X,yy,k,b,e,n):
+    for j in range(n):
+        for i in range(len(X)):
+            h=function2(X[i],k,b,mode='valid')
+            l=crossEntropy(h.flatten(),yy[i%4].flatten())
+            dldh=crossEntropyGradient(h.flatten(),yy[i%4].flatten())
+            dhdX,dhdk,dhdb=function2Derivative(X[i],k,b,mode='valid')
+            dldX=numpy.dot(dldh,dhdX)
+            dldk=numpy.dot(dldh,dhdk)
+            dldb=numpy.dot(dldh,dhdb)
+            k,b=updateKernels([k],[b],[[dldX],[dldk],[dldb]],e,0)
+            print(b)
+            k,b=[k[0],b[0]]
+    return [k,b]
+    
 #kernels=numpy.array([[[1,2,1],[2,3,2],[1,2,1]],[[-1,-2,-1],[0,0,0],[1,2,1]],[[0,0,0],[0,-1,0],[0,0,0]]])
 #biases=[0,0,0]
-kernels,biases=generateRandomKernelsAndBiases([5,3,5],1,0)
+kernels,biases=generateRandomKernelsAndBiases([3,3,3],1,0)
 kernels=numpy.array(kernels)
 
 def cycle(x,y,w,b,kernels,biases,e):

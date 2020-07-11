@@ -104,6 +104,7 @@ def convolve2dDerivative(inp,kernel,stride=1,mode='same'):
         padOffset=2*((len(kernel)-1)//2)
     elif mode=='valid':
         inp=numpy.array(inp)
+        pad=0
         padOffset=(len(kernel)//2)+(len(kernel)-1)//2
     inpDer=[] #dcdx
     kerDer=[] #dcdk
@@ -111,7 +112,10 @@ def convolve2dDerivative(inp,kernel,stride=1,mode='same'):
         for j in range(0,(len(inp[0])-padOffset),stride):
             temp=numpy.zeros(inp.shape)
             temp[i:len(kernel)+i][:,j:len(kernel)+j]=kernel[::-1][:,::-1]
-            inpDer.append(temp[pad:-pad][:,pad:-pad].flatten())
+            if pad!=0:
+                inpDer.append(temp[pad:-pad][:,pad:-pad].flatten())
+            else:
+                inpDer.append(temp.flatten())
             kerDer.append(inp[i:len(kernel)+i][:,j:len(kernel)+j][::-1][:,::-1].flatten())
     return [numpy.array(inpDer),numpy.array(kerDer)]
 
@@ -166,14 +170,16 @@ def function2(xx,kernel,b,act=expRectLinear,pool=maxPool,poolArgs=[2],stride=1,m
 def function2Derivative(xx,kernel,b,act=expRectLinear,actDer=expRectLinearDerivative,poolDer=maxPoolDerivative,poolDerArgs=[2],stride=1,mode='same'):
     x=numpy.array(xx,dtype=float)
     c=convolve2d(x,kernel,stride,mode)+b
-    h=act(c.flatten()).reshape(x.shape)
+    h=act(c.flatten()).reshape(c.shape)
     dydh=poolDer(h,*poolDerArgs)
     dhdc=actDer(c.flatten())
     dcdx,dcdk=convolve2dDerivative(x,kernel,stride,mode)
     dydc=numpy.dot(dydh,dhdc)
     dydx=numpy.dot(dydc,dcdx)
     dydk=numpy.dot(dydc,dcdk)
-    return [dydx,dydk]
+    dhdb=numpy.sum(dhdc)
+    dydb=numpy.dot(dydh,dhdb)
+    return [dydx,dydk,dydb]
 
 def mseGradient(x,y): #dL/dX (w.r.t predicted)
     return [[2*(x[i]-y[i])/len(x) for i in range(len(x))]]
@@ -252,7 +258,8 @@ def feedForwardCNN(inp,kernels,cnnBiases,mlpW,mlpB,y,functions=function2,mlpFunc
         x=functions[i](x,kernels[i],cnnBiases[i],*functArguments[i])
         #x=pools[i](cnnAct[i]((convolve2d(x,kernels[i])+cnnBiases[i]).flatten()).reshape(x.shape),*poolArguments[i])
         a.append(x)
-    a+=feedForward(x.flatten(),mlpW,mlpB,y,mlpFunctions,lossFunction,mlpFunctArguments)[1:]
+    if mlpW!=None:
+        a+=feedForward(x.flatten(),mlpW,mlpB,y,mlpFunctions,lossFunction,mlpFunctArguments)[1:]
     return a
 
 def backPropCNN(kernels,cnnBiases,mlpW,mlpB,a,y,functionDer=function2Derivative,mlpFunctionDer=function1Derivative,lossDerivative=crossEntropyGradient,mlpFunctArguments=[[rectLinearDerivative],[softmaxDerivative]],functArguments=[[expRectLinear,expRectLinearDerivative,maxPoolDerivative,[2],1,'same']]):
@@ -263,19 +270,21 @@ def backPropCNN(kernels,cnnBiases,mlpW,mlpB,a,y,functionDer=function2Derivative,
     tempSh=a[len(kernels)].shape
     a[len(kernels)]=numpy.append(a[len(kernels)].flatten(),1)
     neuronGradients,weightGradients=backProp(mlpW,mlpB,a[len(kernels):],y,mlpFunctionDer,lossDerivative,mlpFunctArguments)
+    biasGradients=[]
     a[len(kernels)]=numpy.delete(a[len(kernels)],-1).reshape(tempSh)
     for i in range(len(a)-len(neuronGradients)-1,-1,-1):
         der=functionDer[i](a[i],kernels[i],cnnBiases[i],*functArguments[i])
+        biasGradients.insert(0,numpy.dot(neuronGradients[0],der[2]))
         weightGradients.insert(0,numpy.dot(neuronGradients[0],der[1]))
         neuronGradients.insert(0,numpy.dot(neuronGradients[0],der[0]))
-    return [neuronGradients,weightGradients]
+    return [neuronGradients,weightGradients,biasGradients]
 
 def updateKernels(kernels,b,g,e,m=0):
     newKernels=[]
     newBiases=[]
     for i in range(len(kernels)):
         newKernels.append(kernels[i]-e*g[1][i].reshape(kernels[i].shape))
-        newBiases.append(b[i]-sum((e*g[0][i+1]).flatten()))
+        newBiases.append(b[i]-numpy.sum(e*g[2][i]))
     return [newKernels,newBiases]
 
 def updateWeights(w,b,g,e,m=0):
