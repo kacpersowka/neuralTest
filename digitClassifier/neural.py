@@ -279,31 +279,31 @@ def backPropCNN(kernels,cnnBiases,mlpW,mlpB,a,y,functionDer=function2Derivative,
         neuronGradients.insert(0,numpy.dot(neuronGradients[0],der[0]))
     return [neuronGradients,weightGradients,biasGradients]
 
-def updateKernels(kernels,b,g,e,m=0):
+def updateKernels(kernels,b,g,e,m,oldG):
     newKernels=[]
     newBiases=[]
     for i in range(len(kernels)):
-        newKernels.append(kernels[i]-e*g[1][i].reshape(kernels[i].shape))
-        newBiases.append(b[i]-numpy.sum(e*g[2][i]))
+        if oldG[0]!=0:
+            newKernels.append(kernels[i]-e*g[1][i].reshape(kernels[i].shape)+m*oldG[1][i].reshape(kernels[i].shape))
+            newBiases.append(b[i]-numpy.sum(e*g[2][i])+numpy.sum(m*oldG[2][i]))
+        else:
+            newKernels.append(kernels[i]-e*g[1][i].reshape(kernels[i].shape))
+            newBiases.append(b[i]-numpy.sum(e*g[2][i]))
     return [newKernels,newBiases]
 
-def updateWeights(w,b,g,e,m=0):
+def updateWeights(w,b,g,e,m,oldG):
     wb=[]
     for i in range(len(w)): #merge biases into weights
         if (type(b[i])==list or type(b[i])==type(numpy.array(0))):
             wb.append(numpy.append(w[i],[[j] for j in b[i]],axis=1))
         else:
             wb.append(numpy.append(w[i],b[i]))
-    #Temp, velocity needs to be carried over
-    velocity=[[0 for j in range(len(wb[i]))] for i in range(len(wb))]
-    #velocity=0
-    #velocity=m*velocity-e*numpy.array(g)
-    #wb=wb+velocity
     for i in range(len(wb)):
         for j in range(len(wb[i])):
-            wb[i][j]=wb[i][j]+velocity[i][j]
-            wb[i][j]=wb[i][j]-e*g[i][j]+m*velocity[i][j]
-            velocity[i][j]=e*g[i][j]+m*velocity[i][j]
+            if oldG!=0:
+                wb[i][j]=wb[i][j]-e*g[i][j]+m*oldG[i][j]
+            else:
+                wb[i][j]=wb[i][j]-e*g[i][j]
     #separate weights and biases
     wn=[]
     bn=[]
