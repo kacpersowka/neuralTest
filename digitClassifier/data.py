@@ -79,7 +79,7 @@ kernels,biases=generateRandomKernelsAndBiases([3,3],1,0)
 kernels=numpy.array(kernels)
 
 def cycle(x,y,w,b,kernels,biases,e,m):
-    ng,wg,bg=(0,0,0)
+    v=[0,0]
     for i in range(len(x)):
         #yb=[0.0 for j in range(10)]
         #yb[int(y[i])]=1.0
@@ -90,14 +90,19 @@ def cycle(x,y,w,b,kernels,biases,e,m):
         print('Outputs: ',a[-2])
         print('Expected: ',yb)
         print('Error: ',a[-1])
-        oldNg,oldWg,oldBg=(ng,wg,bg)
         ng,wg,bg=backPropCNN(kernels,biases,w,b,a,yb)
-        if oldWg!=0:
-            w,b=updateWeights(w,b,wg[len(kernels):],e,m,oldWg[len(kernels):])
-            kernels,biases=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)],bg],e,m,[oldNg[:len(kernels)+1],oldWg[:len(kernels)],oldBg])
+        if v[0]!=0:
+            w,b,vn=updateWeights(w,b,wg[len(kernels):],e,m,v[0][len(kernels):])
+            v[0]=vn
+            kernels,biases,vn=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)],bg],e,m,[v[0][:len(kernels)],v[1]])
+            v[0]+=vn[0]
+            v[1]=v[1]
         else:
-            w,b=updateWeights(w,b,wg[len(kernels):],e,m,oldWg)
-            kernels,biases=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)],bg],e,m,[oldNg,oldWg,oldBg])
+            w,b,vn=updateWeights(w,b,wg[len(kernels):],e,m,v[0])
+            v[0]=vn
+            kernels,biases,vn=updateKernels(kernels,biases,[ng[:len(kernels)+1],wg[:len(kernels)],bg],e,m,[0,0])
+            v[0]+=vn[0]
+            v[1]=v[1]
     return [w,b,kernels,biases]
 
 def drawFigure(fig,fname='test.png'):
@@ -108,7 +113,7 @@ def drawFigure(fig,fname='test.png'):
 if __name__=='__main__':
     e=0.01
     nn=1
-    m=0.01
+    m=0.8
     sx,sy=[X,yy]
     n=len(sx)
     sx,sy=[sx[:n],sy[:n]]

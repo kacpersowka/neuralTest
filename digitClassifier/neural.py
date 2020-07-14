@@ -279,19 +279,23 @@ def backPropCNN(kernels,cnnBiases,mlpW,mlpB,a,y,functionDer=function2Derivative,
         neuronGradients.insert(0,numpy.dot(neuronGradients[0],der[0]))
     return [neuronGradients,weightGradients,biasGradients]
 
-def updateKernels(kernels,b,g,e,m,oldG):
+def updateKernels(kernels,b,g,e,m,v):
     newKernels=[]
     newBiases=[]
     for i in range(len(kernels)):
-        if oldG[0]!=0:
-            newKernels.append(kernels[i]-e*g[1][i].reshape(kernels[i].shape)+m*oldG[1][i].reshape(kernels[i].shape))
-            newBiases.append(b[i]-numpy.sum(e*g[2][i])+numpy.sum(m*oldG[2][i]))
+        if v[0]!=0:
+            newV=e*g[1][i].reshape(kernels[i].shape)
+            newKernels.append(kernels[i]-newV+m*v[0][i].reshape(kernels[i].shape))
+            v[0][i]=newV.flatten()
+            newV=numpy.sum(e*g[2][i])
+            newBiases.append(b[i]-newV+m*v[1][i])
+            v[1][i]=newV
         else:
             newKernels.append(kernels[i]-e*g[1][i].reshape(kernels[i].shape))
             newBiases.append(b[i]-numpy.sum(e*g[2][i]))
-    return [newKernels,newBiases]
+    return [newKernels,newBiases,v]
 
-def updateWeights(w,b,g,e,m,oldG):
+def updateWeights(w,b,g,e,m,v):
     wb=[]
     for i in range(len(w)): #merge biases into weights
         if (type(b[i])==list or type(b[i])==type(numpy.array(0))):
@@ -300,8 +304,10 @@ def updateWeights(w,b,g,e,m,oldG):
             wb.append(numpy.append(w[i],b[i]))
     for i in range(len(wb)):
         for j in range(len(wb[i])):
-            if oldG!=0:
-                wb[i][j]=wb[i][j]-e*g[i][j]+m*oldG[i][j]
+            if v!=0:
+                newV=e*g[i][j]
+                wb[i][j]=wb[i][j]-newV+m*v[i][j]
+                v[i][j]=newV
             else:
                 wb[i][j]=wb[i][j]-e*g[i][j]
     #separate weights and biases
@@ -314,7 +320,7 @@ def updateWeights(w,b,g,e,m,oldG):
         else:
             wn.append(numpy.delete(wb[i],-1))
             bn.append(wb[i][-1])
-    return [wn,bn]
+    return [wn,bn,v]
 
 def train(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,0],functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
     wn,bn=init([len(X[0])]+l,*initArgs)
