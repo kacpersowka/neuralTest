@@ -177,7 +177,8 @@ def function2Derivative(xx,kernel,b,act=expRectLinear,actDer=expRectLinearDeriva
     dydc=numpy.dot(dydh,dhdc)
     dydx=numpy.dot(dydc,dcdx)
     dydk=numpy.dot(dydc,dcdk)
-    dhdb=numpy.sum(dhdc)
+    dcdb=numpy.array([[1] for i in range(len(c.flatten()))])
+    dhdb=numpy.dot(dhdc,dcdb)#numpy.sum(dhdc)
     dydb=numpy.dot(dydh,dhdb)
     return [dydx,dydk,dydb]
 
@@ -287,12 +288,12 @@ def updateKernels(kernels,b,g,e,m,v):
             newV=e*g[1][i].reshape(kernels[i].shape)
             newKernels.append(kernels[i]-newV+m*v[0][i].reshape(kernels[i].shape))
             v[0][i]=newV.flatten()
-            newV=numpy.sum(e*g[2][i])
+            newV=e*g[2][i]
             newBiases.append(b[i]-newV+m*v[1][i])
             v[1][i]=newV
         else:
             newKernels.append(kernels[i]-e*g[1][i].reshape(kernels[i].shape))
-            newBiases.append(b[i]-numpy.sum(e*g[2][i]))
+            newBiases.append(b[i]-e*g[2][i])
     return [newKernels,newBiases,v]
 
 def updateWeights(w,b,g,e,m,v):
