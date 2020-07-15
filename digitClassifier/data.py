@@ -24,11 +24,11 @@ random.seed(time.time())
 w,b=generateRandomWeightsAndBiases([9,16,4],1,0)
 #yy=[0,0,0,0,0,1,0,0,0,0]
 xx=numpy.array([
-    numpy.repeat(numpy.repeat([[0,1,2,4,8],[0,0,1,2,4],[0,0,0,1,2],[0,0,0,0,1],[0,0,0,0,0]],2,axis=0),2,axis=1),
-    numpy.repeat(numpy.repeat([[8,4,2,1,0],[4,2,1,0,0],[2,1,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],2,axis=0),2,axis=1),
-    numpy.repeat(numpy.repeat([[0,0,0,0,0],[0,0,0,0,1],[0,0,0,1,2],[0,0,1,2,4],[0,1,2,4,8]],2,axis=0),2,axis=1),
-    numpy.repeat(numpy.repeat([[0,0,0,0,0],[1,0,0,0,0],[2,1,0,0,0],[4,2,1,0,0],[8,4,2,1,0]],2,axis=0),2,axis=1)])+1
-X=[numpy.multiply(numpy.random.random((10,10)),xx[i%4]) for i in range(10000)]
+    numpy.repeat(numpy.repeat([[0,1,2,4,8],[0,0,1,2,4],[0,0,0,1,2],[0,0,0,0,1],[0,0,0,0,0]],1,axis=0),1,axis=1),
+    numpy.repeat(numpy.repeat([[8,4,2,1,0],[4,2,1,0,0],[2,1,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],1,axis=0),1,axis=1),
+    numpy.repeat(numpy.repeat([[0,0,0,0,0],[0,0,0,0,1],[0,0,0,1,2],[0,0,1,2,4],[0,1,2,4,8]],1,axis=0),1,axis=1),
+    numpy.repeat(numpy.repeat([[0,0,0,0,0],[1,0,0,0,0],[2,1,0,0,0],[4,2,1,0,0],[8,4,2,1,0]],1,axis=0),1,axis=1)])+1
+X=[numpy.multiply(numpy.random.random((5,5)),xx[i%4]) for i in range(10000)]
 yy=numpy.array([[0.01,0.99,0.01,0.01],[0.99,0.01,0.01,0.01],[0.01,0.01,0.01,0.99],[0.01,0.01,0.99,0.01]])
 #yy=numpy.array([[0.01,0.01,0.99,0.01],[0.01,0.01,0.01,0.99],[0.99,0.01,0.01,0.01],[0.01,0.99,0.01,0.01]])
 

@@ -296,7 +296,7 @@ def updateKernels(kernels,b,g,e,m,v):
             newBiases.append(b[i]-e*g[2][i])
     return [newKernels,newBiases,v]
 
-def updateWeights(w,b,g,e,m,v):
+def updateWeights(w,b,g,e,m,v=0):
     wb=[]
     for i in range(len(w)): #merge biases into weights
         if (type(b[i])==list or type(b[i])==type(numpy.array(0))):
@@ -323,8 +323,9 @@ def updateWeights(w,b,g,e,m,v):
             bn.append(wb[i][-1])
     return [wn,bn,v]
 
-def train(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,0],functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
-    wn,bn=init([len(X[0])]+l,*initArgs)
+def train(X,Y,l,n,e,m,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
+    wn,bn=generateRandomWeightsAndBiases([len(X[0])]+l)
+    v=0
     for i in range(n):
         #print('Pass: ',i)
         k=[z for z in range(len(X))]
@@ -335,7 +336,7 @@ def train(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,0],functio
             y=Y[j]
             a=feedForward(x,wn,bn,y,functions,lossFunction[0],functArguments[0])
             g=backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])[1]
-            wn,bn=updateWeights(wn,bn,g,e,m)
+            wn,bn,v=updateWeights(wn,bn,g,e,m,v)
     return [wn,bn]
 
 def sgd(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,100],batchSize=5,learningFactor=1.001,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
