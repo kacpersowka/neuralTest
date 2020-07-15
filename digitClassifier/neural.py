@@ -1,6 +1,6 @@
 import numpy
 import random
-
+import matplotlib.pyplot as plt
 def proper_round(n):
      return int(n)+round(n-int(n)+1)-1
 
@@ -330,13 +330,19 @@ def train(X,Y,l,n,e,m,functions=function1,lossFunction=[mse,mseGradient],functio
         #print('Pass: ',i)
         k=[z for z in range(len(X))]
         random.shuffle(k)
+        num=0
         for j in k:
-            #print('Item: ',j)
+            print('Item: ',num)
             x=X[j]
             y=Y[j]
             a=feedForward(x,wn,bn,y,functions,lossFunction[0],functArguments[0])
+            print('Error: ',a[-1])
+            #f=plt.figure()
+            #plt.imshow(a[-2].reshape(28,28), cmap="Greys")
+            #f.savefig(str(num)+'.png')
             g=backProp(wn,bn,a,y,functionDerivatives,lossFunction[1],functArguments[1])[1]
             wn,bn,v=updateWeights(wn,bn,g,e,m,v)
+            num+=1
     return [wn,bn]
 
 def sgd(X,Y,l,n,e,m,init=generateRandomWeightsAndBiases,initArgs=[1,100],batchSize=5,learningFactor=1.001,functions=function1,lossFunction=[mse,mseGradient],functionDerivatives=function1Derivative,functArguments=[[[rectLinear],[lambda x:x]],[[rectLinearDerivative],[lambda x:numpy.diag([1 for i in x])]]]):
