@@ -107,8 +107,9 @@ def cycle(x,y,w,b,kernels,biases,e,m):
 
 def drawFigure(fig,fname='test.png'):
     f=plt.figure()
-    plt.imshow(fig, cmap="Greys")
-    f.savefig(fname)
+    plt.imshow(fig, cmap="Greys",aspect='equal')
+    plt.axis('off')
+    f.savefig(fname, bbox_inches='tight',pad_inches=0)
     
 if __name__=='__main__':
     e=0.01

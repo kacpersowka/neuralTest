@@ -44,6 +44,12 @@ def leakyRectLinearDerivative(xx):
             x[i]=max(int(x[i]>0),0.01) #apply activation function
     return numpy.diag(x)
 
+def sigmoid(x):
+    return 1/(1 + numpy.exp(-numpy.array(x)))
+
+def sigmoidDerivative(x):
+    return numpy.diag((1/(1 + numpy.exp(-numpy.array(x))))*(1-(1/(1 + numpy.exp(-numpy.array(x))))))
+
 def softmax(x):
     z=numpy.array(x,dtype=float)-max(x)
     return numpy.exp(z) / numpy.sum(numpy.exp(z), axis=0)
@@ -185,7 +191,7 @@ def function2Derivative(xx,kernel,b,act=expRectLinear,actDer=expRectLinearDeriva
 def mseGradient(x,y): #dL/dX (w.r.t predicted)
     return [[2*(x[i]-y[i])/len(x) for i in range(len(x))]]
 
-def backProp(w,b,a,y,functionDer=function1Derivative,lossDerivative=mseGradient,functArguments=[[rectLinearDerivative],[lambda x:[1 for i in x]]]):
+def backProp(w,b,a,y=None,functionDer=function1Derivative,lossDerivative=mseGradient,functArguments=[[rectLinearDerivative],[lambda x:[1 for i in x]]],overrideLoss=None):
     if type(functionDer)!=list:
         functionDer=[functionDer for i in range(len(w))]
     if len(functArguments)==2 and len(w)>2:
@@ -193,7 +199,10 @@ def backProp(w,b,a,y,functionDer=function1Derivative,lossDerivative=mseGradient,
     neuronGradients=[[] for i in a[:-1]]
     weightGradients=[[] for i in w]
     neuronGradients.append(numpy.array([1.0])) #manually calculate loss gradient
-    neuronGradients[-2]=numpy.array(lossDerivative(a[-2],y)) #manually calculate prediction gradient
+    if type(overrideLoss)==type(None) and type(y)!=type(None):
+        neuronGradients[-2]=numpy.array(lossDerivative(a[-2],y)) #manually calculate prediction gradient
+    elif type(overrideLoss)!=type(None):
+        neuronGradients[-2]=numpy.array(lossDerivative(overrideLoss))
     #grad_table[-2]=numpy.array(grad_table[-2][0])
     for i in range(len(a)-3,-1,-1): #skip loss and prediction
         der=(functionDer[i](a[i],w[i],b[i],*functArguments[i]))
@@ -231,7 +240,7 @@ def generateRandomKernelsAndBiases(l,wf=1,bf=0,weightMap=None,biasMap=None):
             b.append(biasMap[i])
     return [w,b]
 
-def feedForward(x,w,b,y,functions=function1,lossFunction=mse,functArguments=[[rectLinear],[lambda x:x]]):
+def feedForward(x,w,b,y=None,functions=function1,lossFunction=mse,functArguments=[[rectLinear],[lambda x:x]]):
     if type(functions)!=list:
         functions=[functions for i in range(len(w))]
     if len(functArguments)==2 and len(w)>2:
@@ -243,7 +252,10 @@ def feedForward(x,w,b,y,functions=function1,lossFunction=mse,functArguments=[[re
         if type(h)!=list and type(h)!=type(numpy.array(0)):
             h=[h]
         a.append(numpy.array(h))
-    a.append(numpy.array([lossFunction(h,y)]))
+    if type(y)!=type(None):
+        a.append(numpy.array([lossFunction(h,y)]))
+    else:
+        a.append(0)
     for i in range(len(b)):
         a[i]=numpy.append(a[i],1)
     return a
