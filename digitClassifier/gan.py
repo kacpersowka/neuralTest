@@ -147,6 +147,7 @@ def cycle(x,wd,bd,wg,bg,e,m,k,n):
             dgsdhn,dgsdwn,dgsdbn=function1Derivative(ga[-2],wg[-1],bg[-1],generatorActivationsDer[-1])
             wgg=[numpy.dot(ngg[0],dgsdwn)] #Weight generator gradients
             bgg=[numpy.dot(ngg[0],dgsdbn)] #Bias generator gradients
+            ngg.insert(0,numpy.dot(ngg[0],dgsdhn))
             for j in range(2,len(ga)): #Backpropagate through the remaining activations in the generator
                 dgn,dgw,dgb=function1Derivative(ga[-j-1],wg[-j],bg[-j],generatorActivationsDer[-j])
                 wgg.insert(0,numpy.dot(ngg[0],dgw))
@@ -180,7 +181,7 @@ if __name__=="__main__":
 
     random.seed(time.time())
     ld=[28**2,32,32,1] #Discriminator layout
-    lg=[28**2,128,28**2] #Generator layout
+    lg=[64,48,32,28**2] #Generator layout
     #He initialization
     wd=[(numpy.random.random(size=[ld[i],ld[i-1]])*2-1)*(2/(ld[i-1]))**0.5 for i in range(1,len(ld))]
     bd=[numpy.array([0 for j in range(ld[i])]) for i in range(1,len(ld))]
