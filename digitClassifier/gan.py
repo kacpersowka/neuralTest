@@ -87,13 +87,13 @@ def cycle(x,wd,bd,wg,bg,e,m,k,n):
                     dga.append(numpy.array(h))
                 yt=dta[-1] #True label (should be 1)
                 yg=dga[-1] #Generated label (should be 0)
-                Ld=-(numpy.log(yt)+numpy.log(1-yg)) #Loss function for discriminator
+                Ld=-(numpy.log(yt+1e-8)+numpy.log(1-yg+1e-8)) #Loss function for discriminator
                 print('Discriminator score for true sample: ',yt)
                 print('Discriminator score for generated sample: ',yg)
                 print('Discriminator loss: ',Ld)
                 #**Get gradient of discriminator**
-                dLddyt=-1/yt #Derivative of loss function w.r.t yt
-                dLddyg=1/(1-yg) #Derivative of loss function w.r.t yg
+                dLddyt=-1/(yt+1e-8) #Derivative of loss function w.r.t yt
+                dLddyg=1/(1-yg+1e-8) #Derivative of loss function w.r.t yg
                 dytdhnt,dytdwn,dytdbn=function1Derivative(dta[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])
                 dygdhng,dygdwn,dygdbn=function1Derivative(dga[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])
                 wdg=[numpy.dot(dLddyt,dytdwn)+numpy.dot(dLddyg,dygdwn)] #Weight gradients
@@ -131,11 +131,11 @@ def cycle(x,wd,bd,wg,bg,e,m,k,n):
                 h=function1(h,wd[l],bd[l],discriminatorActivations[l])
                 da.append(numpy.array(h))
             yg=da[-1]
-            Lg=numpy.log(1-yg) #Loss function for generator
+            Lg=numpy.log(1-yg+1e-8) #Loss function for generator
             print('Discriminator score for generated sample: ',yg)
             print('Generator loss: ',Lg)
             #**Get gradient for generator**
-            dLgdyg=1/(yg-1) #Generator loss gradient
+            dLgdyg=1/(yg-1+1e-8) #Generator loss gradient
             #Manually calculate gradient between label and last layer in disciminator
             dydhdn=function1Derivative(da[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])[0]
             dLgdhdn=numpy.dot(dLgdyg,dydhdn)
@@ -158,6 +158,9 @@ def cycle(x,wd,bd,wg,bg,e,m,k,n):
                 #TODO: add momentum
                 wg[i]=wg[i]-e*wgg[i].reshape(wg[i].shape)
                 bg[i]=bg[i]-e*bgg[i].reshape(bg[i].shape)
+        with open("trained"+str(n)+".pkl", "bw") as fh:
+            data = (wd,bd,wg,bg)
+            pickle.dump(data, fh)
     return [wd,bd,wg,bg]
 
 if __name__=="__main__":
@@ -165,7 +168,7 @@ if __name__=="__main__":
     if len(sys.argv)>1:
         n=int(sys.argv[1])
     else:
-        n=1
+        n=10
     if len(sys.argv)>2:
         e=float(sys.argv[2])
     else:
