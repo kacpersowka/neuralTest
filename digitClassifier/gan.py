@@ -1,4 +1,4 @@
-import sys,time,numpy,pickle,random
+import sys,time,numpy,pickle,random,copy
 import matplotlib.pyplot as plt
 
 def drawFigure(fig,fname='test.png'):
@@ -81,7 +81,18 @@ def backward(xx,ww,b,actDer=rectLinearDerivative):
     dydh=numpy.array(actDer(h))
     return [dydh.dot(ww),dydh.dot(dhdw),dydh.dot(numpy.diag([1 for i in b]))]
 
-def train(x,wd,bd,wg,bg,e,m,k,n):
+def backwardFast(xx,ww,b,actDer=rectLinearDerivative):
+    """
+    Fast approximation of the backward function, functionally the same with trimmed zeros but mathematically imprecise, requires modified backprop to work
+    """
+    x=numpy.append(numpy.array(xx,dtype=float),1.0)
+    w=numpy.array(ww,dtype=float)
+    w=numpy.append(w,[[i] for i in b],axis=1) #add biases into weights
+    h=w.dot(x) #apply weight and bias to layer
+    dydh=numpy.array(actDer(h))
+    return [dydh.dot(ww),dydh.dot([xx for i in ww]),numpy.diagonal(dydh)]
+
+def train(x,wdz,bdz,wgz,bgz,e,m,k,n):
     """
     Train the networks with the following parameters and hyperparameters:
     x=dataset
@@ -92,6 +103,10 @@ def train(x,wd,bd,wg,bg,e,m,k,n):
     k = amount of training cycles for discriminator per item
     n = number of epochs to train for
     """
+    wd=copy.copy(wdz)
+    bd=copy.copy(bdz)
+    wg=copy.copy(wgz)
+    bg=copy.copy(bgz)
     #initialise velocity at 0
     vdw=[0*i for i in wd]
     vdb=[0*i for i in bd]
@@ -136,10 +151,14 @@ def train(x,wd,bd,wg,bg,e,m,k,n):
                 #**Get gradient of discriminator**
                 dLddyt=-1/(yt+1e-8) #Derivative of loss function w.r.t yt
                 dLddyg=1/(1-yg+1e-8) #Derivative of loss function w.r.t yg
-                dytdhnt,dytdwn,dytdbn=backward(dta[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])
-                dygdhng,dygdwn,dygdbn=backward(dga[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])
-                wdg=numpy.dot(dLddyt,dytdwn)+numpy.dot(dLddyg,dygdwn) #Weight gradients
-                bdg=numpy.dot(dLddyt,dytdbn)+numpy.dot(dLddyg,dygdbn) #Bias gradients
+                #dytdhnt,dytdwn,dytdbn=backward(dta[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])
+                #dygdhng,dygdwn,dygdbn=backward(dga[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])
+                #wdg=numpy.dot(dLddyt,dytdwn)+numpy.dot(dLddyg,dygdwn) #Weight gradients
+                #bdg=numpy.dot(dLddyt,dytdbn)+numpy.dot(dLddyg,dygdbn) #Bias gradients
+                dytdhnt,dytdwn,dytdbn=backwardFast(dta[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])
+                dygdhng,dygdwn,dygdbn=backwardFast(dga[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])
+                wdg=(numpy.multiply(dLddyt,dytdwn.transpose())+numpy.multiply(dLddyg,dygdwn.transpose())).transpose()
+                bdg=(numpy.multiply(dLddyt,dytdbn.transpose())+numpy.multiply(dLddyg,dygdbn.transpose())).transpose()
                 nvw=e*wdg.reshape(wd[-1].shape)
                 nvb=e*bdg.reshape(bd[-1].shape)
                 wd[-1]=wd[-1]-nvw+m*vdw[-1]
@@ -152,10 +171,14 @@ def train(x,wd,bd,wg,bg,e,m,k,n):
                 ngg=dLddhng #Neuron gradients (generated)
                 for j in range(2,len(dta)): #Backpropagate through the remaining activations
                     #Get the neuron, weight and bias gradients for both true and generated
-                    dht,dwt,dbt=backward(dta[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])
-                    dhg,dwg,dbg=backward(dga[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])
-                    wdg=numpy.dot(ngt,dwt)+numpy.dot(ngg,dwg)
-                    bdg=numpy.dot(ngt,dbt)+numpy.dot(ngg,dbg)
+                    #dht,dwt,dbt=backward(dta[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])
+                    #dhg,dwg,dbg=backward(dga[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])
+                    #wdg=numpy.dot(ngt,dwt)+numpy.dot(ngg,dwg)
+                    #bdg=numpy.dot(ngt,dbt)+numpy.dot(ngg,dbg)
+                    dht,dwt,dbt=backwardFast(dta[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])
+                    dhg,dwg,dbg=backwardFast(dga[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])
+                    wdg=(numpy.multiply(ngt,dwt.transpose())+numpy.multiply(ngg,dwg.transpose())).transpose()
+                    bdg=(numpy.multiply(ngt,dbt.transpose())+numpy.multiply(ngg,dbg.transpose())).transpose()
                     nvw=e*wdg.reshape(wd[-j].shape)
                     nvb=e*bdg.reshape(bd[-j].shape)
                     wd[-j]=wd[-j]-nvw+m*vdw[-j]
@@ -186,16 +209,21 @@ def train(x,wd,bd,wg,bg,e,m,k,n):
             #**Get gradient for generator**
             dLgdyg=1/(yg-1+1e-8) #Generator loss gradient
             #Manually calculate gradient between label and last layer in disciminator
-            dydhdn=backward(da[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])[0]
+            #dydhdn=backward(da[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])[0]
+            dydhdn=backwardFast(da[-2],wd[-1],bd[-1],discriminatorActivationsDer[-1])[0]
             dLgdhdn=numpy.dot(dLgdyg,dydhdn)
             dg=dLgdhdn #Discriminator gradients, bridges gap from loss to end of generator
             for j in range(2,len(da)): #Backpropagate through the discriminator (neurons only since we arent updating it)
-                dh=backward(da[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])[0]
+                #dh=backward(da[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])[0]
+                dh=backwardFast(da[-j-1],wd[-j],bd[-j],discriminatorActivationsDer[-j])[0]
                 dg=numpy.dot(dg,dh)
             ngg=dg #Neuron generator gradients
-            dgsdhn,dgsdwn,dgsdbn=backward(ga[-2],wg[-1],bg[-1],generatorActivationsDer[-1])
-            wgg=numpy.dot(ngg,dgsdwn) #Weight generator gradients
-            bgg=numpy.dot(ngg,dgsdbn) #Bias generator gradients
+            #dgsdhn,dgsdwn,dgsdbn=backward(ga[-2],wg[-1],bg[-1],generatorActivationsDer[-1])
+            #wgg=numpy.dot(ngg,dgsdwn) #Weight generator gradients
+            #bgg=numpy.dot(ngg,dgsdbn) #Bias generator gradients
+            dgsdhn,dgsdwn,dgsdbn=backwardFast(ga[-2],wg[-1],bg[-1],generatorActivationsDer[-1])
+            wgg=numpy.multiply(ngg,dgsdwn.transpose()).transpose() #Weight generator gradients
+            bgg=numpy.multiply(ngg,dgsdbn.transpose()).transpose() #Bias generator gradients
             nvw=e*wgg.reshape(wg[-1].shape)
             nvb=e*bgg.reshape(bg[-1].shape)
             wg[-1]=wg[-1]-nvw+m*vgw[-1]
@@ -204,9 +232,12 @@ def train(x,wd,bd,wg,bg,e,m,k,n):
             vgb[-1]=nvb
             ngg=numpy.dot(ngg,dgsdhn)
             for j in range(2,len(ga)): #Backpropagate through the remaining activations in the generator
-                dgn,dgw,dgb=backward(ga[-j-1],wg[-j],bg[-j],generatorActivationsDer[-j])
-                wgg=numpy.dot(ngg,dgw)
-                bgg=numpy.dot(ngg,dgb)
+                #dgn,dgw,dgb=backward(ga[-j-1],wg[-j],bg[-j],generatorActivationsDer[-j])
+                #wgg=numpy.dot(ngg,dgw)
+                #bgg=numpy.dot(ngg,dgb)
+                dgn,dgw,dgb=backwardFast(ga[-j-1],wg[-j],bg[-j],generatorActivationsDer[-j])
+                wgg=numpy.multiply(ngg,dgw.transpose()).transpose()
+                bgg=numpy.multiply(ngg,dgb.transpose()).transpose()
                 nvw=e*wgg.reshape(wg[-j].shape)
                 nvb=e*bgg.reshape(bg[-j].shape)
                 wg[-j]=wg[-j]-nvw+m*vgw[-j]
